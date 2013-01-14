@@ -9,7 +9,6 @@ module: stmt* EOF ;
 
 stmt: classStmt
     | defStmt
-	| refStmt
 	| ifStmt
 	| forStmt
 	| whileStmt
@@ -22,13 +21,16 @@ stmt: classStmt
 	| exprStmt
 ;
 
-breakStmt: 'break' (ID {System.out.println($ID);})? ';' ;
+breakStmt: 'break' (label=ID)? ';' ;
 loopStmt: 'continue' (label=ID)? ';' ;
 
 qname: names+=ID ('.' names+=ID)*;
 idlist: ids+=ID (',' ids+=ID)* ;
 //in an eminent scope: locid makes 
 //the id only available to the scope itself.
+//in an obscure scope, it binds the name
+//in that obscure scope, which is available
+//to any scopes nested in that obscure scope.
 locid: (local=':')? name=ID;
 loclist: ids+=locid (',' ids+=locid)*;
 //should it be at the lexer level? 
@@ -58,22 +60,6 @@ locals[Map<String, Object> sigs = new HashMap<String,Object>()]
 			body=suite 
 		)
 	';'
-;
-
-/* ref statement binds a name to a nonlocal/global 
- * variable/field, to modify its value.
- * the name is then available in the entire 
- * function/method scope, even if the ref stmt is
- * nested in a block stmt. in the global scope, 
- * you can use ref to write something in the builtin 
- * scope, provided the field is modifiable.
- *
- * the refStmt can appear anywhere in a function body.
- * if the referenced name is used before the refStmt,
- * a warning is issued, not error.
- */
-refStmt:
-	'ref' (names += modified)+ ';'
 ;
 
 /*
@@ -126,8 +112,16 @@ caseStmt:
 	';'
 ;
 
+// to avoid binding a name in current eminent scope,
+// use ':=' instead of '=' assignment.
+// var: = k rebinds 'var' to the nearest enclosing scope
+// that actually defined such a name.
+// for later assignments, plain '=' can be used.
+// if a name's first appreance is a read operation,
+// it is rebound to the nearest enclosing scope.
+// augmented assignments have the same understanding.
 assignStmt: target = locid ('@' mods += ID)* 
-		(':' type= ID)? '=' value=expr ';'
+		(':' type= ID)? (bind='='|rebind=':=') value=expr ';'
 ;
 
 asid: name=ID ('as' rename=ID)? ;
