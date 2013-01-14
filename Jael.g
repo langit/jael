@@ -43,6 +43,10 @@ suite: //locals[symtab, eminent] //Symbol Table
 	':' (stmts += stmt)* //no ending ';'!
 ;
 
+/*
+ * class B in A with interfaces:
+ */
+
 classStmt:
 	'class' name=ID ('@' mods+=ID)* 
 		( 'in' parent=qname )?
@@ -55,16 +59,15 @@ defStmt
 locals[Map<String, Object> sigs = new HashMap<String,Object>()]
 :
 	'def' name=ID ('@' mods+=ID)* (':' type=qname)? 
-		( '=' ID |  | //property definition
+		( '=' field=ID |  | //property definition
+	//def prop@set(v): .prop := v; //define setter
+	//note that we use ":=" to assign to field,
+	//by-passing the property setter!
 		'(' (params=idlist)? ')' 
 			body=suite 
 		)
 	';'
 ;
-
-/*
- * class B in A with interfaces:
- */
 
 blockStmt: 
 	'@' (label=ID)? //'for', 'while' labels have no ':'
@@ -133,6 +136,11 @@ importStmt: 'import' name=qname ('.' forstar='*' |
 exprStmt: value=expr ';' 
 ;
 
+//cast as binary operator of the same pirority as '.'/'@'.
+//can't use ':' -- consider for_stmt
+//ex:  b = a!str * "3"!int;
+cast_expr: expr '!' (ID| '(' qname ')');
+
 atom: '(' expr ')' #AtomExpr
 	| CHAR #Char
 	| INT #Int
@@ -146,11 +154,16 @@ atom: '(' expr ')' #AtomExpr
 ;
 
 expr: atom #Simple
-	| expr ('.' ID)+ #Attr
+	| expr '.' ID #Attr
     | expr '(' exprlist? ')' #Call
 	| expr op=(MULT|DIVID) expr # Mult
 	| expr op=(ADD|SUB) expr # Add
 	| expr op=COMP expr # Comp
+//concat values as strings: "count is:" 9
+//in case of a leading '.': "count is:" (.counter)
+    | expr expr+ #Concat
+//format values: expr:%3f
+//format_expr: expr ':%' ...
 ;
 
 MULT: '*';
