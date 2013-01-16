@@ -72,7 +72,7 @@ locals[Map<String, Object> sigs = new HashMap<String,Object>()]
 blockStmt: 
 	'@' (label=ID)? //'for', 'while' labels have no ':'
 		body=suite
-	';'
+	(':' 'while' expr)? ';' //a potential do-while loop
 ;
 
 forStmt: 
