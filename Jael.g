@@ -115,6 +115,20 @@ caseStmt:
 	';'
 ;
 
+conslist:
+	constraint (',' constraint)?
+;
+
+constraint: //type constraint
+'[' constraint ']' //list of some type
+//possibly array or function
+| qname ('[' ','* ']'| '(' conslist? ')' )? 
+;
+
+newarray:
+qname('[' ','* ']')?'[' expr? ']' ('{' exprlist? '}')? 
+;
+
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
 // var: = k rebinds 'var' to the nearest enclosing scope
@@ -133,8 +147,7 @@ importStmt: 'import' name=qname ('.' forstar='*' |
     'for' forids+=asid (',' forids+=asid)* )? ';'
 ;
 
-exprStmt: value=expr ';' 
-;
+exprStmt: expr ';' ;
 
 //cast as binary operator of the same pirority as '.'/'@'.
 //can't use ':' -- consider for_stmt
@@ -148,7 +161,6 @@ atom: '(' expr ')' #AtomExpr
 	| REGEX+ #Regex
 	| STR #Str
 	| 'nil' #Nil 
-	| 'self' #Self
 	| 'class' #Class
 	| ID #Id
 ;
