@@ -100,7 +100,7 @@ ifStmt:
 		branches += suite
 	('elif' cond+=expr 
 		branches += suite)*
-	('else' 
+	('else'
 		branches += suite)?
 	';'
 ;
@@ -111,24 +111,30 @@ caseStmt:
 	'case' condval = expr ':'
 	('in' conds += exprlist 
 		branches += suite)+
-	('else' 
+	('else'
 		branches += suite)?
 	';'
 ;
 
-conslist:
-	constraint (',' constraint)?
+typelist:
+	typesig (',' typesig)?
 ;
 
-constraint: //type constraint
-'[' constraint ']' //list of some type
+typesig: //type signature, as type constraint or provider
+'list' ('<' typesig '>')? //list of some type
 //possibly array or function
-| qname ('[' ','* ']'| '(' conslist? ')' )? 
+| typesig ('[' ','* ']' | '(' typelist? ')' )
+| qname
 ;
 
-newarray:
-qname('[' ','* ']')?'[' expr? ']' ('{' exprlist? '}')? 
-;
+array_literal: typesig '['']' 
+	'{' exprlist? '}'; //nesting level: dimension
+list_literal:  '[' exprlist? ']';
+set_literal:  '{' exprlist? '}';
+dict_literal: '{' ':' '}'  //empty dict
+	| '{' expr':'expr (',' expr':'expr)* '}';
+
+array_allocator: typesig '[' exprlist ']';
 
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
@@ -151,7 +157,7 @@ importStmt: 'import' name=qname ('.' forstar='*' |
 exprStmt: expr ';' ;
 
 //cast as binary operator of the same pirority as '.'/'@'.
-//can't use ':' -- consider for_stmt
+//can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
 cast_expr: expr '!' (ID| '(' qname ')');
 
