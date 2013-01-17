@@ -127,14 +127,14 @@ typesig: //type signature, as type constraint or provider
 | qname ('in' '?')? | '?' ('in' qname)? //wild card
 ;
 
-array_literal: typesig '['']' 
+array_literal: (typesig|'<' typesig '>') '['']' 
 	'{' exprlist? '}'; //nesting level: dimension
 list_literal:  '[' exprlist? ']';
 set_literal:  '{' exprlist? '}';
 dict_literal: '{' ':' '}'  //empty dict
 	| '{' expr':'expr (',' expr':'expr)* '}';
 
-array_allocator: typesig '[' exprlist ']';
+array_allocator: (typesig|'<' typesig '>') '[' exprlist ']';
 
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
