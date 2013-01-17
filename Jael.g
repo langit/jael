@@ -124,7 +124,8 @@ typesig: //type signature, as type constraint or provider
 'list' ('<' typesig '>')? //list of some type
 //possibly array or function
 | typesig ('[' ','* ']' | '(' typelist? ')' )
-| qname ('in' '?')? | '?' ('in' qname)? //wild card
+| qname ('in' '?' ('in' qname)?)?  //lower and upper bound
+| '?' ('in' qname)? //wild card
 ;
 
 array_literal: (typesig|'<' typesig '>') '['']' 
