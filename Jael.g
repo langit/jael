@@ -145,8 +145,8 @@ array_allocator: (typesig|'<' typesig '>') '[' exprlist ']';
 // if a name's first appreance is a read operation,
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
-assignStmt: target = locid ('@' mods += ID)* 
-		(':' type= ID)? (bind='='|rebind=':=') value=expr ';'
+assignStmt: (dot='.')? locid ('@' mods += ID)* 
+		(':' type = ID)? ass=('='|AUGAS) expr ';'
 ;
 
 asid: name=ID ('as' rename=ID)? ;
@@ -157,15 +157,10 @@ importStmt: 'import' name=qname ('.' forstar='*' |
 
 exprStmt: expr ';' ;
 
-//cast as binary operator of the same pirority as '.'/'@'.
-//can't use ':' -- consider for_stmt or dictionary
-//ex:  b = a!str * "3"!int;
-cast_expr: expr '!' (ID| '(' qname ')');
-
 //|a,b|{c=a+b; ret c*c;}
 lambda_expr: '|' idlist? '|' '{' stmt* '}' ;
 
-atom: '(' expr ')' #AtomExpr
+atom: '(' expr ')' #Group
 	| CHAR #Char
 	| INT #Int
 	| FLOAT #Float
@@ -173,27 +168,37 @@ atom: '(' expr ')' #AtomExpr
 	| STR #Str
 	| 'nil' #Nil 
 	| 'class' #Class
+	| 'true' #True
+	| 'false' #False
 	| ID #Id
+	| '.' ID #DotId
 ;
 
 expr: atom #Simple
 	| expr '.' ID #Attr
+//cast as binary operator of the same pirority as '.'/'@'.
+//can't use ':' -- consider for_stmt or dictionary
+//ex:  b = a!str * "3"!int;
+    | expr '!' (ID|'('qname')') #Cast
     | expr '(' exprlist? ')' #Call
-	| expr op=(MULT|DIVID) expr # Mult
-	| expr op=(ADD|SUB) expr # Add
+    | expr '[' exprlist ']' #Index
+	| expr op=(MULT|DIVID|MODUL) expr # Term
+	| expr op=(ADD|SUB) expr # Arith
 	| expr op=COMP expr # Comp
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
-    | expr expr+ #Concat
+//    | expr expr+ #Concat
 //format values: expr:%3f
 //format_expr: expr ':%' ...
 ;
 
 MULT: '*';
 DIVID: '/' ;
+MODUL: '%' ;
 ADD : '+' ;
 SUB: '-' ;
 COMP: '>'|'<'|'>='|'<=';
+AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
 
 ID  :
    ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
