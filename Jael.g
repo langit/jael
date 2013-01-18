@@ -73,7 +73,7 @@ blockStmt:
 	('@' ID)? ':' //'for', 'while' labels have no ':'
 		body=suite
 	//a potential do-while loop
-	(':' 'while' expr ('else' suite)? )? ';' 
+	('while' expr)? ';'
 ;
 
 forStmt: 
@@ -161,6 +161,9 @@ exprStmt: expr ';' ;
 //can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
 cast_expr: expr '!' (ID| '(' qname ')');
+
+//|a,b|{c=a+b; ret c*c;}
+lambda_expr: '|' idlist? '|' '{' stmt* '}' ;
 
 atom: '(' expr ')' #AtomExpr
 	| CHAR #Char
