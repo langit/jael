@@ -35,9 +35,9 @@ locid: (local=':')? name=ID;
 loclist: ids+=locid (',' ids+=locid)*;
 //should it be at the lexer level? 
 //no: 'self', 'class' are also atoms
-//modifier:  'get'|'set'|
+modifier:  'class'| ID;
 //'class'|'private'|'public'|'protected'|'final';
-modified: name=ID ('@' mods+=ID)*;
+modified: name=ID ('@' mods+=modifier)*;
 
 suite: //locals[symtab, eminent] //Symbol Table 
 	':' (stmts += stmt)* //no ending ';'!
@@ -48,9 +48,9 @@ suite: //locals[symtab, eminent] //Symbol Table
  */
 
 classStmt:
-	'class' name=ID ('@' mods+=ID)* 
+	'class' name=ID ('@' mods+=modifier)* 
 		( 'in' parent=qname )?
-		( '<<' faces += qname (',' faces += qname)* ) 
+		( '<<' faces += qname (',' faces += qname)* )?
 		body = suite
 	';'
 ;
@@ -58,7 +58,7 @@ classStmt:
 defStmt 
 locals[Map<String, Object> sigs = new HashMap<String,Object>()]
 :
-	'def' name=ID ('@' mods+=ID)* (':' type=qname)? 
+	'def' name=ID ('@' mods+=modifier)* (':' type=qname)? 
 		( '=' field=ID |  | //property definition
 	//def prop@set(v): .prop := v; //define setter
 	//note that we use ":=" to assign to field,
@@ -145,7 +145,7 @@ array_allocator: (typesig|'<' typesig '>') '[' exprlist ']';
 // if a name's first appreance is a read operation,
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
-assignStmt: (dot='.')? locid ('@' mods += ID)* 
+assignStmt: (dot='.')? locid ('@' mods += modifier)* 
 		(':' type = ID)? ass=('='|AUGAS) expr ';'
 ;
 
@@ -170,8 +170,9 @@ atom: '(' expr ')' #Group
 	| 'class' #Class
 	| 'true' #True
 	| 'false' #False
-	| ID #Id
-	| '.' ID #DotId
+	| ID ('@' scope=ID)? #Id
+	| '.' ID ('@' scope=ID)? #DotId
+	| '..' ID ('@' scope=ID)? #DotDotId
 ;
 
 expr: atom #Simple
@@ -184,7 +185,7 @@ expr: atom #Simple
     | expr '[' exprlist ']' #Index
 	| expr op=(MULT|DIVID|MODUL) expr # Term
 	| expr op=(ADD|SUB) expr # Arith
-	| expr op=COMP expr # Comp
+	| expr op=('<'|'<='|'>'|'>=') expr # Comp
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
 //    | expr expr+ #Concat
@@ -197,7 +198,6 @@ DIVID: '/' ;
 MODUL: '%' ;
 ADD : '+' ;
 SUB: '-' ;
-COMP: '>'|'<'|'>='|'<=';
 AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
 
 ID  :
