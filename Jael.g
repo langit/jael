@@ -48,7 +48,7 @@ suite: //locals[symtab, eminent] //Symbol Table
  */
 
 classStmt:
-	'class' name=ID ('@' mods+=modifier)* 
+	'class' modified 
 		( 'in' parent=qname )?
 		( '<<' faces += qname (',' faces += qname)* )?
 		body = suite
@@ -58,7 +58,7 @@ classStmt:
 defStmt 
 locals[Map<String, Object> sigs = new HashMap<String,Object>()]
 :
-	'def' name=ID ('@' mods+=modifier)* (':' type=qname)? 
+	'def' modified (':' type=qname)? 
 		( '=' field=ID |  | //property definition
 	//def prop@set(v): .prop := v; //define setter
 	//note that we use ":=" to assign to field,
@@ -128,14 +128,12 @@ qname ('<' typesig '>')? //such as: list of some type
 | '?' ('in' qname)? //wild card
 ;
 
-array_literal: (typesig|'<' typesig '>') '['']' 
-	'{' exprlist? '}'; //nesting level: dimension
+array_literal: (typesig|'<' typesig '>') '[' dim=exprlist? ']'
+	('{' val=exprlist? '}')?; //nesting level: dimension
 list_literal:  '[' exprlist? ']';
 set_literal:  '{' exprlist? '}';
 dict_literal: '{' ':' '}'  //empty dict
 	| '{' expr':'expr (',' expr':'expr)* '}';
-
-array_allocator: (typesig|'<' typesig '>') '[' exprlist ']';
 
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
@@ -145,7 +143,7 @@ array_allocator: (typesig|'<' typesig '>') '[' exprlist ']';
 // if a name's first appreance is a read operation,
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
-assignStmt: (dot='.')? locid ('@' mods += modifier)* 
+assignStmt: scope=('.'|':')? modified 
 		(':' type = ID)? ass=('='|AUGAS) expr ';'
 ;
 
@@ -155,12 +153,19 @@ importStmt: 'import' name=qname ('.' forstar='*' |
     'for' forids+=asid (',' forids+=asid)* )? ';'
 ;
 
-exprStmt: expr ';' ;
+exprStmt: 
+	  expr ';' 
+	| qname ':' exprlist ';'
+;
 
 //|a,b|{c=a+b; ret c*c;}
 lambda_expr: '|' idlist? '|' '{' stmt* '}' ;
 
 atom: '(' expr ')' #Group
+	| list_literal #List
+	| array_literal#Array
+	| set_literal #Set
+	| dict_literal #Dict
 	| CHAR #Char
 	| INT #Int
 	| FLOAT #Float

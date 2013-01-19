@@ -1,0 +1,31 @@
+x = 'a';
+g = /ok//and find/;
+def fun(a,b):
+	if a@outer>0: 
+		s = a;
+	elif b>a:
+		s = b;
+	else:
+		s = a+b;
+	;
+	for i in a:
+		s += i;
+	;
+;
+
+puts: "test", 5 ;
+array = <?>[]{2,3,5};
+qq = str[]{"a", "b", "c"};
+
+class A:
+	stat = /[0-9]+/;
+	count = 0;
+
+	def meth(a):
+		.a = a;
+	;
+
+	def cmeth@class():
+		count += 1;
+	;
+;
