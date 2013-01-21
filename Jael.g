@@ -173,48 +173,39 @@ exprStmt:
 //|a,b|{c=a+b; ret c*c;}
 lambda_expr: '|' idlist? '|' '{' stmt* '}' ;
 
-atom: '(' expr ')' #Group
-	| list #AtList
-	| array #AtArray
-	| set #AtSet
-	| dict #AtDict
-	| CHAR #Char
-	| INT #Int
-	| FLOAT #Float
-	| REGEX+ #Regex
-	| STR #Str
-	| 'nil' #Nil 
-	| 'class' #Class
-	| 'true' #True
-	| 'false' #False
-	| ID ('@' scope=ID)? #Id
-	| '.' ID ('@' scope=ID)? #DotId
-	| '..' ID ('@' scope=ID)? #DotDotId
-;
-
-expr: atom #Simple
-	| expr '.' ID #Attr
+expr: 
 //cast as binary operator of the same pirority as '.'/'@'.
 //can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
-    | expr '!' (ID|'('qname')') #Cast
+      expr '!' (ID|'('qname')') #Cast
+	| expr '.' ID #Attr
     | expr '(' exprlist? ')' #Call
     | expr '[' exprlist ']' #Index
-	| expr op=(MULT|DIVID|MODUL) expr # Term
-	| expr op=(ADD|SUB) expr # Arith
+	| expr op=('*'|'/'|'%') expr # Term
+	| expr op=('+'|'-') expr # Arith
 	| expr op=('<'|'<='|'>'|'>=') expr # Comp
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
 //    | expr expr+ #Concat
 //format values: expr:%3f
 //format_expr: expr ':%' ...
+	| '(' expr ')' #Group
+	| ('.'|'..'| ) ID ('@' scope=ID)? #Id
+	| REGEX+ #Regex
+	| list #LList
+	| array #LArray
+	| set #LSet
+	| dict #LDict
+	| CHAR #Char
+	| INT #Int
+	| FLOAT #Float
+	| STR #Str
+	| 'nil' #Nil 
+	| 'class' #Class
+	| 'true' #True
+	| 'false' #False
 ;
 
-MULT: '*';
-DIVID: '/' ;
-MODUL: '%' ;
-ADD : '+' ;
-SUB: '-' ;
 AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
 
 ID  :
