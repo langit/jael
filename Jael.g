@@ -37,7 +37,7 @@ locid: (local=':')? name=ID;
 loclist: ids+=locid (',' ids+=locid)*;
 //should it be at the lexer level? 
 //no: 'self', 'class' are also atoms
-modifier:  'class'| ID;
+modifier: 'class'| ID;
 //'class'|'private'|'public'|'protected'|'final';
 modified: name=ID ('@' mods+=modifier)*;
 
@@ -73,7 +73,7 @@ blockStmt:
 	('@' ID)? ':' //'for', 'while' labels have no ':'
 		body=suite
 	//a potential do-while loop
-	('while' expr)? 
+	(';' 'while' ':' expr)? 
 ;
 
 forStmt: 
@@ -81,7 +81,7 @@ forStmt:
 	'for' (counter=locid '=' cstart=expr ',')? 
 		loopvar = loclist 'in' iterable=expr
 		body = suite
-	('else' //with the help of a label
+	(';' 'else' //with the help of a label
 		exhausted = suite )?
 ;
  
@@ -89,16 +89,16 @@ whileStmt:
 	('@' label =ID)? 
 	'while' cond = expr 
 		body = suite
-	('else' 
+	(';' 'else' 
 		falsified = suite)?
 ;
 
 ifStmt:
 	'if' cond += expr 
 		branches += suite
-	('elif' cond+=expr 
+	(';' 'elif' cond+=expr 
 		branches += suite)*
-	('else'
+	(';' 'else'
 		branches += suite)?
 ;
 
@@ -106,18 +106,10 @@ exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt:
 	'case' condval = expr ':'
-	('in' conds += exprlist 
-		branches += suite)+
-	('else'
-		branches += suite)?
+	'in' vals += exprlist branches += suite
+	(';' 'in' vals += exprlist branches += suite)*
+	(';' 'else' branches += suite)?
 ;
-
-list:  '[' exprlist? ']';
-set:  '<' exprlist? '>';
-dict: '{' ':' '}'  //empty dict
-	| '{' expr':'expr (',' expr':'expr)* '}';
-//nesting levels in val match dimension
-array: '{'exprlist?'}' | complet ('[' expr ']')+; 
 
 //mislist:  expr? (',' expr?)* ;
 
@@ -165,13 +157,12 @@ exprStmt: expr
 	| qname ':' exprlist //simple call
 ;
 
-
 expr: 
 //cast as binary operator of the same pirority as '.'/'@'.
 //can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
       expr '!' (ID|'('qname')') #Cast
-	| expr '.' ID #Attr
+	| expr '.' attr #DotAttr
     | expr '(' exprlist? ')' #Call
     | expr '[' exprlist ']' #Index
 	| expr op=('*'|'/'|'%') expr # Term
@@ -183,14 +174,15 @@ expr:
 //format values: expr:%3f
 //format_expr: expr ':%' ...
 	| '(' expr ')' #Group
-	| ('.'|'..'| ) ID ('@' scope=ID)? #Id
+	| readID ('@' scopeID)? #JustId
+	| ('.'|'..') attr ('@' scopeID)? #OwnAttr
 	//|a,b|{c=a+b; ret c*c}
 	| '|' idlist? '|' '{' stmts ';'? '}' #Lamb
-	| REGEX+ #Regex
-	| list #LList
-	| array #LArray
-	| set #LSet
-	| dict #LDict
+	| (parts += REGEX)+ #Regex //between parts there is a '/'
+	| '[' exprlist? ']' #List
+	| ('{'exprlist?'}' | complet ('[' expr ']')+) #Array
+	| '<' exprlist? '>' #Set
+	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
 	| CHAR #Char
 	| INT #Int
 	| FLOAT #Float
@@ -200,6 +192,12 @@ expr:
 	| 'true' #True
 	| 'false' #False
 ;
+
+readID: ID ;
+scopeID: ID ;
+attr: 'import'| 'if'| 'else'| 'elif'| 'case' |'in' 
+	|'for'| 'while'| 'break'| 'continue'
+	|'true'| 'false'| 'class'| 'nil'| ID;
 
 AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
 
