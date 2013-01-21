@@ -121,7 +121,7 @@ set:  '<' exprlist? '>';
 dict: '{' ':' '}'  //empty dict
 	| '{' expr':'expr (',' expr':'expr)* '}';
 //nesting levels in val match dimension
-array: '{'exprlist?'}'; 
+array: '{'exprlist?'}' | complet ('[' expr ']')+; 
 
 //mislist:  expr? (',' expr?)* ;
 
@@ -142,7 +142,7 @@ simplet: //simple type
 complet: //complex type
 '<' '?' ('in' hi=simplet)? '>'//wild card
 |'<' lo=simplet ('in' wild='?' ('in' hi=simplet)?)? '>' //bounds
-|'<' typesig (',' typesig )+ '>' //tuple type
+|'<' typesig (',' typesig )* '>' //tuple type
 ;
 
 typesig: complet|simplet;
