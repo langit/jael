@@ -18,6 +18,7 @@ array:int[] = {2,3,4,5};
 qq = {"a", "b", "c"}; ---array
 xb = <int>[2]; 
 seta = <2,3,5>;
+lam = |a,b|{a+b};
 
 class A:
 	stat = /[0-9]+/;

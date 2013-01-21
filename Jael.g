@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.HashMap;
 }
 
-module: stmt* EOF ;
+stmts: seq+=stmt (';' seq+=stmt)* ;
+
+module: stmts ';' EOF ;
 
 stmt: classStmt
     | defStmt
@@ -21,8 +23,8 @@ stmt: classStmt
 	| exprStmt
 ;
 
-breakStmt: 'break' (label=ID)? ';' ;
-loopStmt: 'continue' (label=ID)? ';' ;
+breakStmt: 'break' (label=ID)? ;
+loopStmt: 'continue' (label=ID)?;
 
 qname: names+=ID ('.' names+=ID)*;
 idlist: ids+=ID (',' ids+=ID)* ;
@@ -40,7 +42,7 @@ modifier:  'class'| ID;
 modified: name=ID ('@' mods+=modifier)*;
 
 suite: //locals[symtab, eminent] //Symbol Table 
-	':' (stmts += stmt)* //no ending ';'!
+	':' (stmts ';')? //no ';' to match ':'
 ;
 
 /*
@@ -52,7 +54,6 @@ classStmt:
 		( 'in' parent=qname )?
 		( '<<' faces += qname (',' faces += qname)* )?
 		body = suite
-	';'
 ;
 
 defStmt 
@@ -66,14 +67,13 @@ locals[Map<String, Object> sigs = new HashMap<String,Object>()]
 		'(' (params=idlist)? ')' 
 			body=suite 
 		)
-	';'
 ;
 
 blockStmt: 
 	('@' ID)? ':' //'for', 'while' labels have no ':'
 		body=suite
 	//a potential do-while loop
-	('while' expr)? ';'
+	('while' expr)? 
 ;
 
 forStmt: 
@@ -83,7 +83,6 @@ forStmt:
 		body = suite
 	('else' //with the help of a label
 		exhausted = suite )?
-	';'
 ;
  
 whileStmt:
@@ -92,7 +91,6 @@ whileStmt:
 		body = suite
 	('else' 
 		falsified = suite)?
-	';'
 ;
 
 ifStmt:
@@ -102,7 +100,6 @@ ifStmt:
 		branches += suite)*
 	('else'
 		branches += suite)?
-	';'
 ;
 
 exprlist: exprs += expr (',' exprs += expr)* ;
@@ -113,7 +110,6 @@ caseStmt:
 		branches += suite)+
 	('else'
 		branches += suite)?
-	';'
 ;
 
 list:  '[' exprlist? ']';
@@ -156,22 +152,19 @@ typesig: complet|simplet;
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: scope=('.'|':')? modified 
-		(':' type = typesig)? ass=('='|AUGAS) expr ';'
+		(':' type = typesig)? ass=('='|AUGAS) expr 
 ;
 
 asid: name=ID ('as' rename=ID)? ;
 
 importStmt: 'import' name=qname ('.' forstar='*' | 
-    'for' forids+=asid (',' forids+=asid)* )? ';'
+    'for' forids+=asid (',' forids+=asid)* )? 
 ;
 
-exprStmt: 
-	  expr ';' 
-	| qname ':' exprlist ';'
+exprStmt: expr 
+	| qname ':' exprlist //simple call
 ;
 
-//|a,b|{c=a+b; ret c*c;}
-lambda_expr: '|' idlist? '|' '{' stmt* '}' ;
 
 expr: 
 //cast as binary operator of the same pirority as '.'/'@'.
@@ -191,6 +184,8 @@ expr:
 //format_expr: expr ':%' ...
 	| '(' expr ')' #Group
 	| ('.'|'..'| ) ID ('@' scope=ID)? #Id
+	//|a,b|{c=a+b; ret c*c}
+	| '|' idlist? '|' '{' stmts ';'? '}' #Lamb
 	| REGEX+ #Regex
 	| list #LList
 	| array #LArray
