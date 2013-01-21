@@ -14,8 +14,10 @@ def fun(a,b):
 ;
 
 puts: "test", 5 ;
-array = <?>[]{2,3,5};
-qq = str[]{"a", "b", "c"};
+array:int[] = {2,3,4,5};
+qq = {"a", "b", "c"}; ---array
+xb = <int>[2]; 
+seta = <2,3,5>;
 
 class A:
 	stat = /[0-9]+/;
@@ -29,3 +31,4 @@ class A:
 		count += 1;
 	;
 ;
+

@@ -116,24 +116,36 @@ caseStmt:
 	';'
 ;
 
-typelist:
-	typesig (',' typesig)?
-;
-
-typesig: //type signature, as type constraint or provider
-qname ('<' typesig '>')? //such as: list of some type
-//possibly array or function
-| typesig ('[' ','* ']' | '(' typelist? ')' )
-| qname ('in' '?' ('in' qname)?)?  //lower and upper bound
-| '?' ('in' qname)? //wild card
-;
-
-array_literal: (typesig|'<' typesig '>') '[' dim=exprlist? ']'
-	('{' val=exprlist? '}')?; //nesting level: dimension
-list_literal:  '[' exprlist? ']';
-set_literal:  '{' exprlist? '}';
-dict_literal: '{' ':' '}'  //empty dict
+list:  '[' exprlist? ']';
+set:  '<' exprlist? '>';
+dict: '{' ':' '}'  //empty dict
 	| '{' expr':'expr (',' expr':'expr)* '}';
+//nesting levels in val match dimension
+array: '{'exprlist?'}'; 
+
+//mislist:  expr? (',' expr?)* ;
+
+typelist:
+	typesig (',' typesig)*
+;
+
+simplet: //simple type
+	qname ('<' typelist '>')? //such as: list of some type
+	//possibly (jagged) array or function
+	| simplet ('[' ']' | '(' typelist? ')' )
+	| complet ('[' ']' | '(' typelist? ')' )
+	//regular multidim arrays can be added later
+	//like: x=int@[3,4] creates a 3 by 4 matrix 
+;
+
+//type signature, as type constraint or specifier
+complet: //complex type
+'<' '?' ('in' hi=simplet)? '>'//wild card
+|'<' lo=simplet ('in' wild='?' ('in' hi=simplet)?)? '>' //bounds
+|'<' typesig (',' typesig )+ '>' //tuple type
+;
+
+typesig: complet|simplet;
 
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
@@ -144,7 +156,7 @@ dict_literal: '{' ':' '}'  //empty dict
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: scope=('.'|':')? modified 
-		(':' type = ID)? ass=('='|AUGAS) expr ';'
+		(':' type = typesig)? ass=('='|AUGAS) expr ';'
 ;
 
 asid: name=ID ('as' rename=ID)? ;
@@ -162,10 +174,10 @@ exprStmt:
 lambda_expr: '|' idlist? '|' '{' stmt* '}' ;
 
 atom: '(' expr ')' #Group
-	| list_literal #List
-	| array_literal#Array
-	| set_literal #Set
-	| dict_literal #Dict
+	| list #AtList
+	| array #AtArray
+	| set #AtSet
+	| dict #AtDict
 	| CHAR #Char
 	| INT #Int
 	| FLOAT #Float
