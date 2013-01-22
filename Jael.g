@@ -73,7 +73,7 @@ blockStmt:
 	('@' ID)? ':' //'for', 'while' labels have no ':'
 		body=suite
 	//a potential do-while loop
-	(';' 'while' ':' expr)? 
+	('while' ':' expr)? 
 ;
 
 forStmt: 
@@ -81,7 +81,7 @@ forStmt:
 	'for' (counter=locid '=' cstart=expr ',')? 
 		loopvar = loclist 'in' iterable=expr
 		body = suite
-	(';' 'else' //with the help of a label
+	('else' //with the help of a label
 		exhausted = suite )?
 ;
  
@@ -89,16 +89,16 @@ whileStmt:
 	('@' label =ID)? 
 	'while' cond = expr 
 		body = suite
-	(';' 'else' 
+	('else' 
 		falsified = suite)?
 ;
 
 ifStmt:
 	'if' cond += expr 
 		branches += suite
-	(';' 'elif' cond+=expr 
+	('elif' cond+=expr 
 		branches += suite)*
-	(';' 'else'
+	('else'
 		branches += suite)?
 ;
 
@@ -106,9 +106,8 @@ exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt:
 	'case' condval = expr ':'
-	'in' vals += exprlist branches += suite
-	(';' 'in' vals += exprlist branches += suite)*
-	(';' 'else' branches += suite)?
+	('in' vals += exprlist branches += suite)+
+	('else' branches += suite)?
 ;
 
 //mislist:  expr? (',' expr?)* ;
