@@ -46,6 +46,11 @@ class A:
 	;
 
 	def cmeth@class():
-		count += 1;
+		:local = 1;
+		count@final = 2;
+		.count@super = 1;
+		x[3] = 2;
+		g().m = 1;
+		g() = 1; --- bad
 	;
 ;

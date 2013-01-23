@@ -136,14 +136,14 @@ typesig: complet|simplet;
 
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
-// var: = k rebinds 'var' to the nearest enclosing scope
+// var := k rebinds 'var' to the nearest enclosing scope
 // that actually defined such a name.
 // for later assignments, plain '=' can be used.
 // if a name's first appreance is a read operation,
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
-assignStmt: scope=('.'|':')? modified 
-		(':' type = typesig)? ass=('='|AUGAS) expr 
+assignStmt: 
+	':'? expr (':' type = typesig)? ('='|AUGAS) expr 
 ;
 
 asid: name=ID ('as' rename=ID)? ;
@@ -152,8 +152,7 @@ importStmt: 'import' name=qname ('.' forstar='*' |
     'for' forids+=asid (',' forids+=asid)* )? 
 ;
 
-exprStmt: expr 
-	| qname ':' exprlist //simple call
+exprStmt: expr (':' exprlist)? //may have simple call
 ;
 
 expr: 
@@ -161,7 +160,7 @@ expr:
 //can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
       expr '!' (ID|'('qname')') #Cast
-	| expr '.' attr #DotAttr
+	| expr '.' attr ('@' mods+=modifier)* #DotAttr //..: super
     | expr '(' exprlist? ')' #Call
     | expr '[' exprlist ']' #Index
 	| expr op=('*'|'/'|'%') expr # Term
@@ -173,8 +172,8 @@ expr:
 //format values: expr:%3f
 //format_expr: expr ':%' ...
 	| '(' expr ')' #Group
-	| readID ('@' scopeID)? #JustId
-	| ('.'|'..') attr ('@' scopeID)? #OwnAttr
+	| modified #JustId //semantic check on modifiers
+	| '.' attr ('@' mods+=modifier)* #OwnAttr
 	//|a,b|{c=a+b; ret c*c}
 	| '|' idlist? '|' '{' stmts ';'? '}' #Lamb
 	| (parts += REGEX)+ #Regex //between parts there is a '/'
@@ -192,12 +191,21 @@ expr:
 	| 'false' #False
 ;
 
-readID: ID ;
-scopeID: ID ;
 attr: 'import'| 'if'| 'else'| 'elif'| 'case' |'in' 
 	|'for'| 'while'| 'break'| 'continue'
 	|'true'| 'false'| 'class'| 'nil'| ID;
-
+/*
+primitiveType
+    :   'bool'
+    |   'char'
+    |   'byte'
+    |   'short'
+    |   'int'
+    |   'long'
+    |   'float'
+    |   'double'
+    ;
+*/
 AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
 
 ID  :
