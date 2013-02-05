@@ -1,5 +1,6 @@
 //a simple verion to play with
 grammar Jael;
+
 @header{
 import java.util.Map;
 import java.util.HashMap;
@@ -166,6 +167,7 @@ expr:
 	| expr op=('*'|'/'|'%') expr # Term
 	| expr op=('+'|'-') expr # Arith
 	| expr op=('<'|'<='|'>'|'>=') expr # Comp
+	| expr ('if' expr ':' expr)+  # Forked
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
 //    | expr expr+ #Concat
@@ -176,11 +178,13 @@ expr:
 	| '.' attr ('@' mods+=modifier)* #OwnAttr
 	//|a,b|{c=a+b; ret c*c}
 	| '|' idlist? '|' '{' stmts ';'? '}' #Lamb
-	| (parts += REGEX)+ #Regex //between parts there is a '/'
+	//between parts there is a hidden '/'
+    | REGEX #Regex
 	| '[' exprlist? ']' #List
 	| ('{'exprlist?'}' | complet ('[' expr ']')+) #Array
 	| '<' exprlist? '>' #Set
 	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
+    | TOPN expr (':'expr)? (TMID expr (':'expr)? )*  TEND #Template
 	| CHAR #Char
 	| INT #Int
 	| FLOAT #Float
@@ -222,7 +226,6 @@ FLOAT
     |   INT EXPONENT
     ;
 
-REGEX: ('/' (ESC_SEQ | ~'/')* '/')+ ;
 
 CHAR:  '\'' (ESC_SEQ | ~('\''|'\\') ) '\''
     ;
@@ -230,6 +233,12 @@ CHAR:  '\'' (ESC_SEQ | ~('\''|'\\') ) '\''
 STR
     :  '"' (ESC_SEQ | ~('\\'|'"') )* '"'
     ;
+
+TOPN :'"""' (ESC_SEQ|'\'\\\''|'\'' ~('\'')|~('\\'|'\''))* '\'\'';
+TMID :'\'\''(ESC_SEQ|'\'\\\''|'\'' ~('\'')|~('\\'|'\''))* '\'\'';
+TEND :'\'\''(ESC_SEQ|'\'\\\''|'\'' ~('\'')|~('\\'|'\''))* '"""';
+
+REGEX: ('/' (ESC_SEQ | ~'/')* '/')+;
 
 fragment
 EXPONENT : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
