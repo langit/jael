@@ -201,13 +201,13 @@ attr: 'import'| 'if'| 'else'| 'elif'| 'case' |'in'
 /*
 primitiveType
     :   'bool'
-    |   'char'
-    |   'byte'
-    |   'short'
-    |   'int'
-    |   'long'
-    |   'float'
-    |   'double'
+    |   'char' #'c', 12c
+    |   'byte' #12b
+    |   'short' #2233s
+    |   'int' 
+    |   'long' #2344L
+    |   'float' #3.0f
+    |   'double' #3.0f
     ;
 */
 AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
@@ -217,15 +217,14 @@ ID  :
 ;
 
 INT : '0'
-	| '1'..'9' '0'..'9'*
+	| '1'..'9' ('_'? '0'..'9')*
     ;
 
 FLOAT
-    :   INT '.' ('0'..'9')* EXPONENT?
-    |   '.' ('0'..'9')+ EXPONENT?
+    :   INT '.' ('0'..'9' |'0'..'9' ('_'? '0'..'9')*) EXPONENT?
+    |   '.' '0'..'9' ('_'? '0'..'9')* EXPONENT?
     |   INT EXPONENT
     ;
-
 
 CHAR:  '\'' (ESC_SEQ | ~('\''|'\\') ) '\''
     ;
@@ -241,7 +240,7 @@ TEND :'\'\''(ESC_SEQ|'\'\\\''|'\'' ~('\'')|~('\\'|'\''))* '"""';
 REGEX: ('/' (ESC_SEQ | ~'/')* '/')+;
 
 fragment
-EXPONENT : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
+EXPONENT : ('e'|'E') ('+'|'-')? '0'..'9' ('_'? '0'..'9')* ;
 
 fragment
 HEX_DIGIT : ('0'..'9'|'a'..'f'|'A'..'F') ;
