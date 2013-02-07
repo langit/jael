@@ -105,8 +105,8 @@ ifStmt:
 
 exprlist: exprs += expr (',' exprs += expr)* ;
 
-caseStmt:
-	'case' condval = expr ':'
+caseStmt: //need more thorough thinking...
+	'class'? 'case' condval = expr ':'
 	('in' vals += exprlist branches += suite)+
 	('else' branches += suite)?
 ;
