@@ -470,7 +470,7 @@ This way the problem is solved.
 
 Local variables and instance fields:
 preceed an ID with a ':' to define a local variable in 
-an obscure  scope (where name def automatically belongs
+an obscure scope (where name def by '=' automatically belongs
 to closest containing eminent scope, such as 
 builtin, global, class, and function scopes, 
 obscure scopes are introduced by blocks and complex stmt). 
@@ -478,9 +478,16 @@ such a local variable must be defined on its
 first appearance in the scope, 
 which must be an assignment. Futer reference to the same
 variable should not have ':' before its ID anymore.
+
 In an eminent scope (where assingments by default define
-a name in itself), ': ID = expr' defines a name only
-available to itself (even nested scopes can't see that ID).
+a name in itself), '/ID = expr' defines a name only
+available to itself (nested obsecure scopes can see that ID,
+but not any nested eminent scopes, it is said to be "covered").
+This is useful in three ways: 1. to make sure the name does not 
+shadow a name in a parent scope. 2. to make sure the name is
+not available to nested scopes. 3. in a class scope, to make
+sure the name is not a static field of the class, but only
+a variable in the initialization block.
 
 Use .<ID> to access (read/write) an instance 
 or a class member (field or method) in a method. 
