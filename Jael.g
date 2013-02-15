@@ -34,7 +34,7 @@ idlist: ids+=ID (',' ids+=ID)* ;
 //in an obscure scope, it binds the name
 //in that obscure scope, which is available
 //to any scopes nested in that obscure scope.
-locid: (local=':')? name=ID;
+locid: (local=(':'|'|'))? name=ID;
 loclist: ids+=locid (',' ids+=locid)*;
 //should it be at the lexer level? 
 //no: 'self', 'class' are also atoms
@@ -144,7 +144,7 @@ typesig: complet|simplet;
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: 
-	':'? expr (':' type = typesig)? ('='|AUGAS) expr 
+	('|'|':')? expr (':' type = typesig)? ('='|AUGAS) expr 
 ;
 
 asid: name=ID ('as' rename=ID)? ;
