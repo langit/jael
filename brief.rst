@@ -480,7 +480,7 @@ which must be an assignment. Futer reference to the same
 variable should not have ':' before its ID anymore.
 
 In an eminent scope (where assingments by default define
-a name in itself), '/ID = expr' defines a name only
+a name in itself), '\| ID = expr' defines a name only
 available to itself (nested obsecure scopes can see that ID,
 but not any nested eminent scopes, it is said to be "covered").
 This is useful in three ways: 1. to make sure the name does not 
