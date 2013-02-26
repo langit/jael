@@ -468,74 +468,55 @@ this is done after the right hand side values are calculated::
     $lhs1 = $rhs1;
 This way the problem is solved.
 
-Local variables and instance fields:
-preceed an ID with a ':' to define a local variable in 
-an obscure scope (where name def by '=' automatically belongs
-to closest containing eminent scope, such as 
-builtin, global, class, and function scopes, 
-obscure scopes are introduced by blocks and complex stmt). 
-such a local variable must be defined on its 
-first appearance in the scope, 
-which must be an assignment. Futer reference to the same
-variable should not have ':' before its ID anymore.
+There are eminent and obscure scopes.
+Obscure scopes belong to a complex statement (if, for, case, while). 
+Eminent scopes include  global, class, and function scopes.
+While a function scope is simple and only has a common layer,
+global and class scopes have fine internal structure.
+They are made up of two layers:
+the member layer, and the common layer.
+In the member layer, plain assignment to an ID
+defines a member for the class or module. To escape
+that behavior, prepend the ID with ':' to put the ID
+into the common layer.
+Similarly, to define a method for the class,
+use "def meth(...)". A method in the common layer is
+defined with "def :meth(...)". To define an instance 
+method, use "def .meth(...)", which is unique in that
+the ID is prepended with a '.', and such an ID is not
+usable in the class scope, but only available in 
+the dotted-scope (i.e. the instance scope).
+It is not possible to define instance fields in 
+the class scope: they are defined in the instance 
+methods, where instance fields are defined by assignments
+with a '.' leading the field ID, e.g., ".ID = expr". 
 
-In an eminent scope (where assingments by default define
-a name in itself), '\| ID = expr' defines a name only
-available to itself (nested obsecure scopes can see that ID,
-but not any nested eminent scopes, it is said to be "covered").
-This is useful in three ways: 1. to make sure the name does not 
-shadow a name in a parent scope. 2. to make sure the name is
-not available to nested scopes. 3. in a class scope, to make
-sure the name is not a static field of the class, but only
-a variable in the initialization block.
+Prepend an ID with a ':' to define an obscure variable in 
+an obscure scope. Futer reference to the same
+variable may omit the ':' before its ID.
+The assignment of "ID '=' expr" in an 
+obscure scope puts the definition into the immediately enclosing
+eminent scope (IEES). As for which layer of the IEES, 
+it is determined by another assignment exactly in the 
+eminent scope (not any enclosed obscure scope).
 
-Use .<ID> to access (read/write) an instance 
-or a class member (field or method) in a method. 
-You can also refer to a class member by class.<ID>.
-To write to a class field, it is also possible to
-use a ref statement as per scoping rule, and since
-methods are readonly, you don't have to ref them. 
-Scoping rule does not apply to instance fields, 
-because they are never defined in the class scope.
-If self is seen in a method, the method must be an 
-instance method, otherwise it is automatically 
-considered a class method. It is OK to explicitly
-specify that a method is static by doing this::
+In a method, referring to a class member is different
+from referring to an instance member.
+Use .<ID> to access (read/write) an instance member 
+(field or method) in a method. 
+Refer to a class member by scope rule or "class.ID".
 
-    def static@class ():
-
-In the rare case when an instance method does not 
-refer to self anywhere, you can make an artificial 
-reference statement like this::
-
-    def meth@self(...): ... ; 
-    
-so that the method is considered an instance method.
 An abstract method is always intended to be virtual, 
 so it can never be a class/static method.
 
-If a class is a non-static inner class, use 
-self.@field to refer to the member of an outer class.
-We may use self.@Outer.field to refer to the exact outer
-class (the same as "Outer.self.field" in Java).
-If an inner class (including its own inner classes if any)
-never refers to an instance member of an
-outer class, then it is deemed a static inner class, 
-it is optional to provide a @class modifier in this case,
-just as define a static method. To force such
-a class to be nonstatic, simply do::
-
-    class Inner@self:
-
-which says the Inner class needs an outer instance.
-
-Note, a (global/class) field does not need to be
-explicitly declared, it is automatically inferred.
-In the translation to Java, a field might not show
-up as a member of the enclosing class when it is
-*only* used in the defining scope (not even used
-in a nested scope). To enforce a member to be
-so, use @global or @class modifiers.
+To refer to the the static member of an outer class "Outer",
+the scope rule is used: both 'member' and 'Outer.member' are OK.
+If a class is an instance inner class, the instance members
+are also available, but must use the special syntax of "..member"
+to refer to an instance member of an outer class.
+(it is different from the '.' rule, which
+rules out the mixing of inheritance scoping with 
+the contextual scoping).
 
 To support inedentation/dedentation, require
 that the first line of the source code have
