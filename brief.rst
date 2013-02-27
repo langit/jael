@@ -518,35 +518,35 @@ instance of a nested class: "v..member" refers to an outer member.
 Below is an example::
 
  class bare:
-  --- static members: like in Python
-  .staticfield = 3;
-  def .staticfun(): --- static method
+  .staticfield = 3; // static field
+  def .staticfun(): // static method
     .staticfield += 1;
   ;
 
-  def imethod(): --- instance method
+  def imethod(): // instance method
     .ifield += 1;
   ;
 
-  class iclass:
+  class iclass: // instance class
     def imeth():
-      ..instancefield += 1; ---outer instance field
-      ..staticfield = 0;
-      staticfield := 0; --- or simply by scoping
+      ..instancefield += 1; //outer instance field
+      ..staticfield = 0; //outer static field
+      staticfield := 0; // or simply by scoping
     ;
   ;
 
-  class .sclass: ; --- static class
+  class .sclass: ; // static class
 
-  local_var = 4; ---not attached
-  for i in range(3): --- i in IEES 
+  def :lf(): ; //a local function
+
+  local_var = 4; //local variable
+  for i in range(3): // i in IEES, local
     local_var += i;
-    def mfun(): jot(i); ; --- not instance fun
+    def mfun(): jot(i); ; // local function
   ;
   puts(i);
-  i = 4; --- i is not a member
+  i = 4; // not a member, but a local var
  ;
-
 
 To support inedentation/dedentation, require
 that the first line of the source code have

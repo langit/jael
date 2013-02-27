@@ -237,8 +237,11 @@ TOPN :'"""' (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'';
 TMID :'\'\''(ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'';
 TEND :'\'\''(ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '"""';
 
-REGEX: '/:' (ESC_SEQ | '\\' ('+'|'?'|'*'|'('|')'|'['|']'|'{'|';/') 
-    | ';' ~('/') | ~('\\'|';') )* ';/'
+REGEX: '/:' (ESC_SEQ | '\\' ('+'|'?'|'*'|'('|')'|'['|']'|'{'|':/') 
+    | ':' ~('/') | ~('\\'|':') )* ':/'
+;
+
+INTDIV: '/?' //integer division
 ;
 
 fragment
@@ -266,7 +269,7 @@ UNICODE_ESC
     :   '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
     ;
 
-LINE_COMMENT : '---' .*? '\r'? '\n' -> skip ;
+LINE_COMMENT : '//' .*? '\r'? '\n' -> skip ;
 COMMENT      : '/*' .*? '*/' -> skip ;
 WS : [ \t\n]+ -> skip ;
 
