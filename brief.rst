@@ -472,51 +472,81 @@ There are eminent and obscure scopes.
 Obscure scopes belong to a complex statement (if, for, case, while). 
 Eminent scopes include  global, class, and function scopes.
 While a function scope is simple and only has a common layer,
-global and class scopes have fine internal structure.
-They are made up of two layers:
-the member layer, and the common layer.
-In the member layer, plain assignment to an ID
-defines a member for the class or module. To escape
-that behavior, prepend the ID with ':' to put the ID
-into the common layer.
-Similarly, to define a method for the class,
-use "def meth(...)". A method in the common layer is
-defined with "def :meth(...)". To define an instance 
-method, use "def .meth(...)", which is unique in that
-the ID is prepended with a '.', and such an ID is not
-usable in the class scope, but only available in 
-the dotted-scope (i.e. the instance scope).
-It is not possible to define instance fields in 
-the class scope: they are defined in the instance 
-methods, where instance fields are defined by assignments
-with a '.' leading the field ID, e.g., ".ID = expr". 
+global and class scopes has finer controls of access.
+The "def/class" statements at the ground level
+of the class/module (a module is just a class, there is no 
+real difference) scope are special. If the name is 
+prepended with a '.', then it defines a static member;
+if the name is a plain name, the it defines an instance member;
+if the name is prepended with ':', then it is not a member, but 
+only a local definition.
+Method/function/class definitions not on the ground level are 
+never members, they can only be local definitions. 
+A static field is defined by prepending the name with '.' in
+a class/module scope. All other variables are considered local.
+It is not possible to define instance fields within the class
+scope, they are defined inside instance methods. 
+In instance methods, instance fields are defined by prepending 
+a variable name with '.'.
 
 Prepend an ID with a ':' to define an obscure variable in 
 an obscure scope. Futer reference to the same
 variable may omit the ':' before its ID.
 The assignment of "ID '=' expr" in an 
 obscure scope puts the definition into the immediately enclosing
-eminent scope (IEES). As for which layer of the IEES, 
-it is determined by another assignment exactly in the 
-eminent scope (not any enclosed obscure scope).
+eminent scope (IEES). 
 
-In a method, referring to a class member is different
-from referring to an instance member.
-Use .<ID> to access (read/write) an instance member 
+Use .<ID> to access (read/write) an instance/class member 
 (field or method) in a method. 
-Refer to a class member by scope rule or "class.ID".
+Referring to a class member by "class.ID" is also OK.
+When not shadowed, instance methods defined in the class scope
+can also be referred to by simple name (via scoping rule).
+But instance methods defined in super classes can only
+be refered to by ".meth" or "super.meth".
 
 An abstract method is always intended to be virtual, 
 so it can never be a class/static method.
 
-To refer to the the static member of an outer class "Outer",
-the scope rule is used: both 'member' and 'Outer.member' are OK.
-If a class is an instance inner class, the instance members
-are also available, but must use the special syntax of "..member"
-to refer to an instance member of an outer class.
-(it is different from the '.' rule, which
-rules out the mixing of inheritance scoping with 
-the contextual scoping).
+Nested classes.
+To refer to the the static/instance member of an outer class,
+the syntax is "..member". Super class member is simply referred
+to as "super.member". If the super class is nested, to refer
+to its outer class member is possible: "super..member". Such
+a syntax can be generalized to a variable 'v' referring to an 
+instance of a nested class: "v..member" refers to an outer member.
+
+Below is an example::
+
+ class bare:
+  --- static members: like in Python
+  .staticfield = 3;
+  def .staticfun(): --- static method
+    .staticfield += 1;
+  ;
+
+  def imethod(): --- instance method
+    .ifield += 1;
+  ;
+
+  class iclass:
+    def imeth():
+      ..instancefield += 1; ---outer instance field
+      ..staticfield = 0;
+      staticfield := 0; --- or simply by scoping
+    ;
+  ;
+
+  class .sclass: ; --- static class
+
+  local_var = 4; ---not attached
+  for i in range(3): --- i in IEES 
+    local_var += i;
+    def mfun(): jot(i); ; --- not instance fun
+  ;
+  puts(i);
+  i = 4; --- i is not a member
+ ;
+
 
 To support inedentation/dedentation, require
 that the first line of the source code have
