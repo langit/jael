@@ -392,7 +392,8 @@ for code generation).
 
 The TI engine almost works like an 
 interpreter (the type interpreter), 
-with the emphasis on types, not values.
+with the emphasis on types, not values:
+this may be called "interpretive type inference" (ITI).
 The loop statements are not looped, typically only
 "executed" once. All branches of conditional statements
 are "executed" simultaneously. 
@@ -584,3 +585,16 @@ if any operation (method calls) involves
 "UNKNONW" would produce "UNKNOWN". At the end
 of this initial round, all execution paths that
 produce a return type is not "UNKNOWN" must be a SEP.
+
+
+Independent Compilation 
+=======================
+
+The code can be first compiled into an intermediate format
+like the python byte code (without much type information yet),
+which would be called the raw byte code.
+Then the next stage is type inference/interpretation (TI), 
+which is separated from the production of byte code 
+(e.g. a library could first be compiled into raw byte code).
+The TI generates executable code with full type information.
+
