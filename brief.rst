@@ -404,7 +404,7 @@ serves as the memory.
 Then the second pass is code generation.
 A method is replicated as many times as there
 are different signatures (which could come with
-auxilary intermediate results from TI engine).
+auxilary intermediate results from ITI engine).
 
 If the above way of implementation is possible,
 then code (corresponding to the AST) reuse might be
@@ -593,8 +593,19 @@ Independent Compilation
 The code can be first compiled into an intermediate format
 like the python byte code (without much type information yet),
 which would be called the raw byte code.
-Then the next stage is type inference/interpretation (TI), 
+Then the next stage is interpretive type inference (ITI), 
 which is separated from the production of byte code 
 (e.g. a library could first be compiled into raw byte code).
-The TI generates executable code with full type information.
+The ITI generates executable code with full type information.
 
+
+Partial function call
+======================
+
+A function can be called with partial parameters, using brackets.
+for example, if log(x,b) gives the logarithm of x with base b,
+then "fun = log[3]" produces a function 'fun' that takes
+an argument b, so fun(5) produces log(3,5).
+Of course you can do fun2=log[3,5], then fun2() gives log(3,5).
+And the same calling convention with keywords and default values
+is applicable with partial calling. 
