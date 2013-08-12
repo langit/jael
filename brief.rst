@@ -540,7 +540,7 @@ Below is an example::
 
   def :lf(): ; //a local function
 
-  local_var = 4; //local variable
+  local_var:+int = 4; //local variable, unsigned int
   for i in range(3): // i in IEES, local
     local_var += i;
     def mfun(): jot(i); ; // local function
@@ -609,3 +609,45 @@ an argument b, so fun(5) produces log(3,5).
 Of course you can do fun2=log[3,5], then fun2() gives log(3,5).
 And the same calling convention with keywords and default values
 is applicable with partial calling. 
+
+Function definition grammar
+========================================
+
+  def mult:int(a:int, b:int) private:
+      return a*b
+
+Object query grammar
+=====================
+How about something like the case matching in LISP?
+
+   case ?{.age < 5, .sex = female}:
+
+Meta-programming
+=================
+Use a template like syntax to do meta-programming:
+
+   #for i in ("a", "b", "c"):
+      def $i.get(): return ._$i; ;
+
+That will generate the following code:
+
+   def a.get(): return ._a; ;
+   def b.get(): return ._b; ;
+   def c.get(): return ._c; ;
+
+The template-style meta-programming grammar is a mix of 
+macro in C and shell scripting (bash).
+It is also possible to define a meta-class:
+
+   #class mymeta(parent_meta):
+      _dict = {}
+      //a callback function
+      #def getattr(attr):
+          #if attr in dir(.):
+          #return .attr
+          #return ._dict[attr]
+
+      #def setattr(attr, value):
+          #if attr in dir(.):
+          #return .attr = value
+          #return ._dict[attr] = value

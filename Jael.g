@@ -58,7 +58,9 @@ classStmt:
 ;
 
 defStmt 
-locals[Map<String, Object> sigs = new HashMap<String,Object>()]
+locals[int getIT(int k){ return 0; }
+public Map<String, String> sigs = new HashMap<String,String>();
+public Map<String, Object> defs = new HashMap<String,Object>()]
 :
 	'def' modified (':' type=qname)? 
 		( '=' field=ID |  | //property definition
@@ -70,7 +72,9 @@ locals[Map<String, Object> sigs = new HashMap<String,Object>()]
 		)
 ;
 
-blockStmt: 
+blockStmt
+locals[Map<String, Object> defs = new HashMap<String,Object>()]
+: 
 	('@' ID)? ':' //'for', 'while' labels have no ':'
 		body=suite
 	//a potential do-while loop
@@ -135,6 +139,9 @@ complet: //complex type
 
 typesig: complet|simplet;
 
+astarget: //assignment target
+locid (':' typesig)? | expr '.' ID ;
+
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
 // var := k rebinds 'var' to the nearest enclosing scope
@@ -144,7 +151,7 @@ typesig: complet|simplet;
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: 
-	('|'|':')? expr (':' type = typesig)? ('='|AUGAS) expr 
+	astarget ('='|AUGAS) expr 
 ;
 
 asid: name=ID ('as' rename=ID)? ;

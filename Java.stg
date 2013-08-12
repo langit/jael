@@ -1,0 +1,37 @@
+<! the def is implemented as methods, 
+which have their wrapping classes with 
+instance for passing around.
+
+For instance methods, the wrapping class
+could have been instantiated lazily via 
+java property (for future). !>
+
+DefStmt(def) = <<
+<def.signatures:methimpl()>
+<modifiers(def)> class <def.name>{
+   <def.nestedones:nestedDef()>
+   <def.closures:closure()>
+   <def.signatures:callimpl()>
+   <def.curries:implcurry()>
+}
+<modifiers(def)> final <def.name> <def.name> = new <def.name>();
+>>
+
+closure(clo) = <<
+
+>>
+
+methimpl(sig) = <<
+<modifiers(def)> <def.type> <def.name>(<sig.args;seperator=", ">)
+{
+<def.stmts;seperator="\n">
+}
+>>
+
+callimpl(sig) = <<
+<modifiers(def)> <def.type> call(<sig.args;seperator=", ">)
+{
+   <def.name>(<sig.argnames; seperator=", ">);
+}
+>>
+
