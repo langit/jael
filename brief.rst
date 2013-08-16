@@ -598,9 +598,50 @@ which is separated from the production of byte code
 (e.g. a library could first be compiled into raw byte code).
 The ITI generates executable code with full type information.
 
+Type Intervals
+==============
 
-Partial function call
-======================
+When inferring the type of a name, an interval with lower and
+upper bound is maintained. An assignment to the name
+helps tighten the lower bound: 
+the least common type of the current lower bound and 
+the assigned type will be the new lower bound.
+Any member fetching via the dot-operator (including 
+mathematic operators, which can eventually be converted
+into dot-operators) will help tighten the upper bound:
+the member searching starts from the current lower bound
+up the chain of inheritance until the member is found 
+at some class, which will be the new upper bound if it
+is a subclass of the current upper bound. 
+
+Note that if there is no name shadowing along the 
+inheritance chain, the searching from the current
+upper bound also works:
+if the current upper bound does not have the requested 
+member, it is searched for down the chain of inheritance
+toward the lower bound. The first type having the requested
+member will replace the current upper bound.
+However, we might want to mix with Java classes, when
+that approach breaks down.
+
+
+Name shadowing
+==============
+
+A name defined in a scope will shadow the same 
+name defined in scopes containing it.
+However, unlike in Java, a name defined
+in a class can NOT be shadowed in its subclasses.
+No name can be shared by any two members of class,
+such as methods, fields, properties, and inner classes.
+Inner class can access members of outer class
+by grammar "..outer_field". Inner class can
+have a field of the same name with an outer field,
+which will be shadowed for an inner class defined
+further inside the inner class.
+
+Partial function call (Curry)
+=============================
 
 A function can be called with partial parameters, using brackets.
 for example, if log(x,b) gives the logarithm of x with base b,

@@ -295,20 +295,29 @@ class BetterTrans{ //module level, every member is static
 				int a;
 				int t;
 				private closure$0$(){}
+
+				public int inc(){
+						a += 1;
+						t += a;
+						return t;
+				}
 				public class inc{
 						public final int call(){
-								a += 1;
-								t += a;
-								return t;
+								return inc();
 						}
+				}
+
+				public int dec(){
+						t -= a;
+						a -= 1;
+						return t;
 				}
 				public class dec{
 						public final int call(){
-								t -= a;
-								a -= 1;
-								return t;
+								return dec();
 						}
 				}
+
 				final Object[] call(int $a$){
 						a = $a$; //explicitly init closure param
 						t = a*a; //implicitly init closure param
@@ -332,6 +341,11 @@ class BetterTrans{ //module level, every member is static
 
 	//to be passed as a class reference
 	static final test.$class$ test = new test.$class$();
+
+	public static test test() { return new test(); }
+	public static test test(int a, String b){
+			return new test(a,b);
+	}
 
 	public static class test {
 			public int a;
