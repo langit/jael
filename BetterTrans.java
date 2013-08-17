@@ -218,8 +218,10 @@ class BetterTrans{ //module level, every member is static
 			//e.g.: def functions in a for loop.
 			//let all *local functs* do it by instance field,
 			//default values are then provided to constructor
-			static final int $t = 0; //default value for t
-			static final int $b = 0; //default value for t
+			public static class $deft0{
+				static final int t = 0; //default value for t
+				static final int b = 0; //default value for t
+			}
 			public final void call(put f, int b, int t){
 					f.call(b);
 					if (t>1) invoke.call(f, b, t-1);
@@ -292,14 +294,14 @@ class BetterTrans{ //module level, every member is static
 	public static final invoke invoke = new invoke();
 
 	public static class closure$0${
-				int a;
-				int t;
+				int $a$;
+				int $t$;
 				private closure$0$(){}
 
 				public int inc(){
-						a += 1;
-						t += a;
-						return t;
+						$a$ += 1;
+						$t$ += $a$;
+						return $t$;
 				}
 				public class inc{
 						public final int call(){
@@ -308,9 +310,9 @@ class BetterTrans{ //module level, every member is static
 				}
 
 				public int dec(){
-						t -= a;
-						a -= 1;
-						return t;
+						$t$ -= $a$;
+						$a$ -= 1;
+						return $t$;
 				}
 				public class dec{
 						public final int call(){
@@ -318,12 +320,14 @@ class BetterTrans{ //module level, every member is static
 						}
 				}
 
-				final Object[] call(int $a$){
-						a = $a$; //explicitly init closure param
-						t = a*a; //implicitly init closure param
-						inc inc = new inc();//def inc
-						dec dec = new dec();//def dec
-						return new Object[]{inc, dec};
+				final Object[] call(int a){
+					$a$ = a; //explicitly init closure param
+					$t$ = $a$*$a$;//implicitly init closure param
+					//inc inc = new inc();//def inc
+					//dec dec = new dec();//def dec
+					//lazy instantiation: at this point it
+					//becomes clear that a closure is required
+					return new Object[]{new inc(), new dec()};
 				}
 	}
 
@@ -376,6 +380,11 @@ class BetterTrans{ //module level, every member is static
 			public class show{//method ref: new show()
 				public void call(){ show(); }
 			}
+			//for an instance method, we can use "this.new show()",
+			//which costs neither memory (an instance field)
+			//nor CPU (initialize an instance of the method)
+			//at initialization of the class containing this method. 
+			//It can be done with a public field init in constructor.
 			//alternatively, use java property for lazy init
 			private show show = null;
 			public show getShow(){

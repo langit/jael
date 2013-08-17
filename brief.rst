@@ -640,6 +640,34 @@ have a field of the same name with an outer field,
 which will be shadowed for an inner class defined
 further inside the inner class.
 
+Scope for Closure
+=================
+
+Closure is an ad-hoc environment where local variables
+can live and serve methods enclosed in the closure.
+An open method is a method that refers to a variable 
+(not a member of some enclosing class) outside itself.
+An open method requires a closure to execute or 
+to instanciate as a method object.
+Variables referred to by and outside of open methods
+are closure variables. 
+
+There are two considerations for closure formation: 
+1. a closure coincides with a method signature;
+2. a closure must serve all enclosed open methods.
+If 2 can not be satisfied, then there must be some
+open method that refers to a variable beyond the
+method that the closure coincides with. Thus it is
+clear the closure should coincides with a containing method.
+Once both conditions are met, all closure variables will
+become the member variables of the closure class.
+
+Some enclosed methods are not open: they do not refer to
+any variables outside themselves. Those methods can be
+placed in the method wrapping class as a static Java method.
+And they can be referred to as 
+"<enclosing method>.<enclosed method>" in Java.
+
 Partial function call (Curry)
 =============================
 
