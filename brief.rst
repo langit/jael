@@ -662,6 +662,14 @@ clear the closure should coincides with a containing method.
 Once both conditions are met, all closure variables will
 become the member variables of the closure class.
 
+Alternatively, for each enclosing method there will be
+its own closure, nested inside other closures. This way
+the closures form a tree structure paralell to that
+of the methods. Closures has the implementation,
+Wrappers presents the methods in the right place.
+The good thing about nested closures is that 
+enclosure variables are only instantiated as needed.
+
 Some enclosed methods are not open: they do not refer to
 any variables outside themselves. Those methods can be
 placed in the method wrapping class as a static Java method.
