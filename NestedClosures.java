@@ -16,7 +16,7 @@
  */
 public class NestedClosures{
 	
-	//direct method with closure
+	//direct method with closure variables
 	public static clout$0.clin$0 clout(int k){
 			return new clout$0().call(k);
 	}
@@ -31,7 +31,7 @@ public class NestedClosures{
 				return new clin$0();
 			}
 
-			//direct method with closure
+			//direct method with closure variables
 			public clin$0.inn clin(){
 					return new clin$0().call();
 			}

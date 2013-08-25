@@ -669,12 +669,20 @@ of the methods. Closures has the implementation,
 Wrappers presents the methods in the right place.
 The good thing about nested closures is that 
 enclosure variables are only instantiated as needed.
-
-Some enclosed methods are not open: they do not refer to
-any variables outside themselves. Those methods can be
-placed in the method wrapping class as a static Java method.
+A method with some local variables serving as closure variables 
+is implemented in its closure class while its corresponding method
+simply instantiate the closure and invoke the implementation. 
+Otherwise it does not need a closure class, and is implemented 
+in its corresponding method. A nested local method may use some 
+closure variables, and it must be wrapped inside the closure class
+of the method it is nested.
+Otherwise the local method can be wrapped in the wrapper class 
+for the method it is nested.
+Those local methods are not open: they do not refer to
+any variables outside themselves. 
 And they can be referred to as 
 "<enclosing method>.<enclosed method>" in Java.
+A local class nested in a method follows the same pattern as a local method.
 
 Partial function call (Curry)
 =============================
@@ -685,13 +693,44 @@ then "fun = log[3]" produces a function 'fun' that takes
 an argument b, so fun(5) produces log(3,5).
 Of course you can do fun2=log[3,5], then fun2() gives log(3,5).
 And the same calling convention with keywords and default values
-is applicable with partial calling. 
+is applicable with partial calling. if "fun3=log[b=2]" then
+fun3(5) gives log(5,2). 
+
+The signature of a function/method is given by "log{float,float}",
+the curried signature of log[3] is "log{[float],float}".
+
+Funtional programming
+======================
+
+Any function can be applied to each element of an iterable, which
+results in a new iterable with elements being the returned values.
+"iterable:fun" is the grammar. the expression "1..5:log(.,2)" 
+produces an iterable object that gives log2 values of 1 to 5.
+if the object is not iterable, the whole object is passed to
+the function. For example: "123:print" will have 123 printed.
+This "2..5,3..6:log" gives [log(2,3), log(3,4), log(4,5)].
+It is easy to chain functions: "items:cos:sin"
+evaluates to [sin(cos(x)) for x in items].
+
 
 Function definition grammar
 ========================================
+Define a private function (only availble in scope of definition) this way::
 
-  def mult:int(a:int, b:int) private:
+  def::mult:int(a:int, b:int):
       return a*b
+
+Define a protected function (available in package and for inheritance) this way::
+
+  def:mult:int(a:int, b:int):
+      return a*b
+
+Define a public one like this::
+
+  def mult:int(a:int, b:int):
+      return a*b
+
+A lambda function is defined as "def(x,y) x**2+y**2".
 
 Object query grammar
 =====================
