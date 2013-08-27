@@ -23,10 +23,10 @@ public class NestedClosures{
 	//method closure: implementation
 	public static class clout$0{
 			//closure variable(s)
-			int closv1;
+			private int closv1;
 
 			//implementation of closure method
-			public clin$0 call(int k){
+			private clin$0 call(int k){
 				closv1 = k;
 				return new clin$0();
 			}
@@ -37,16 +37,16 @@ public class NestedClosures{
 			}
 			public class clin$0{
 					//closure variable(s)
-					int closv2;
+					private int closv2;
 
 					//implementation of closure method
-					public inn call(){
+					private inn call(){
 							closv2 = 2;
 							return new inn();
 					}
 
 					//direct method without closure variables
-					public int inn(){
+					private int inn(){
 							closv2 += closv1;
 							closv1 += 1;
 							return closv2;

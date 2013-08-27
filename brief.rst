@@ -732,6 +732,41 @@ Define a public one like this::
 
 A lambda function is defined as "def(x,y) x**2+y**2".
 
+
+Class definition and initialization
+===================================
+A class definition is a set of declarations for: fields, methods, properties.
+Methods are similar to functions, static ones starts with '.', instance ones without.
+Special methods: static initializer def.(): and instance initializer def():.
+fields: static and instance, with possible initial values, like an assignment statement.
+properties:  def prop.get() and def prop.set(v). Example::
+
+  class myclass(parentclass):
+     .staticfield = 1 //declare and init a static field
+
+     def .(): //class initializer
+        .staticfield2 = 1
+
+     def .smeth(a): //static method
+        return a+.staticfield
+
+     def (): //instance initializer
+        .ifield = 1
+
+     ifield2 = 3
+     def meth(a) int @atomic: //instance method
+        return a+.ifield+.staticfield
+
+     def + (a): //instance operator
+        return .ifield + a
+
+     def name: //property getter
+        return .name_ //holding field
+
+     def name = n str: //property setter
+        .name_ = n 
+
+
 Object query grammar
 =====================
 How about something like the case matching in LISP?
