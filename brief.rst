@@ -739,32 +739,34 @@ A class definition is a set of declarations for: fields, methods, properties.
 Methods are similar to functions, static ones starts with '.', instance ones without.
 Special methods: static initializer def.(): and instance initializer def():.
 fields: static and instance, with possible initial values, like an assignment statement.
-properties:  def prop.get() and def prop.set(v). Example::
+properties:  def prop: and def prop=v: Example::
 
-  class myclass(parentclass):
-     .staticfield = 1 //declare and init a static field
+  class myclass from parentclass:
 
-     def .(): //class initializer
-        .staticfield2 = 1
+     staticfield @class = 1 //declare and init a static field
 
-     def .smeth(a): //static method
+     def() @class: //class initializer
+        .staticfield2 = 2
+
+     def smeth(a) @class: //static method
         return a+.staticfield
 
-     def (): //instance initializer
+     def(): //instance initializer
         .ifield = 1
 
-     ifield2 = 3
+     ifield2 = 3 //declare an instance field
      def meth(a) int @atomic: //instance method
         return a+.ifield+.staticfield
 
-     def + (a): //instance operator
+     def +(a): //instance operator
         return .ifield + a
 
+     str ::name_; //declare a private field for property
      def name: //property getter
         return .name_ //holding field
 
-     def name = n str: //property setter
-        .name_ = n 
+     def name = str n: //property setter
+        .::name_ = n 
 
 
 Object query grammar
@@ -775,20 +777,21 @@ How about something like the case matching in LISP?
 
 Meta-programming
 =================
-Use a template like syntax to do meta-programming:
+Use a template like syntax to do meta-programming::
 
    #for i in ("a", "b", "c"):
-      def $i.get(): return ._$i; ;
+      def <<i>>: return ._<<i>>; ;
+   #;
 
-That will generate the following code:
+That will generate the following code::
 
-   def a.get(): return ._a; ;
-   def b.get(): return ._b; ;
-   def c.get(): return ._c; ;
+   def a: return ._a; ;
+   def b: return ._b; ;
+   def c: return ._c; ;
 
 The template-style meta-programming grammar is a mix of 
 macro in C and shell scripting (bash).
-It is also possible to define a meta-class:
+It is also possible to define a meta-class::
 
    #class mymeta(parent_meta):
       _dict = {}

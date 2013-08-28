@@ -52,8 +52,8 @@ suite: //locals[symtab, eminent] //Symbol Table
 
 classStmt:
 	'class' modified 
-		( 'in' parent=qname )?
-		( '<<' faces += qname (',' faces += qname)* )?
+		( 'from' parent=qname )?
+		( 'in' faces += qname (',' faces += qname)* )?
 		body = suite
 ;
 
