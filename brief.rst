@@ -751,10 +751,10 @@ properties:  def prop: and def prop=v: Example::
      def .smeth(a): //static method
         return a + .staticfield
 
-     def myclass(int a): //constructor
+     def class(int a): //constructor
         .ifield = a
 
-     def myclass(): //constructor
+     def class(): //constructor
         .int ifield = 1 //introduce field with type
 
      def(a): //instance callable
