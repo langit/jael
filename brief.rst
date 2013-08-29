@@ -737,22 +737,28 @@ Class definition and initialization
 ===================================
 A class definition is a set of declarations for: fields, methods, properties.
 Methods are similar to functions, static ones starts with '.', instance ones without.
-Special methods: static initializer def.(): and instance initializer def():.
+Special methods: initializer def():.
 fields: static and instance, with possible initial values, like an assignment statement.
 properties:  def prop: and def prop=v: Example::
 
   class myclass from parentclass:
 
-     staticfield @class = 1 //declare and init a static field
+     .staticfield = 1 //declare and init a static field
 
-     def() @class: //class initializer
-        .staticfield2 = 2
+     def .: //class initializer
+        .staticfield2 = 2 //introduce fields anywhere 
 
-     def smeth(a) @class: //static method
-        return a+.staticfield
+     def .smeth(a): //static method
+        return a + .staticfield
 
-     def(): //instance initializer
-        .ifield = 1
+     def myclass(int a): //constructor
+        .ifield = a
+
+     def myclass(): //constructor
+        .int ifield = 1 //introduce field with type
+
+     def(a): //instance callable
+        return .ifield+a
 
      ifield2 = 3 //declare an instance field
      def meth(a) int @atomic: //instance method
@@ -765,8 +771,8 @@ properties:  def prop: and def prop=v: Example::
      def name: //property getter
         return .name_ //holding field
 
-     def name = str n: //property setter
-        .::name_ = n 
+     def name = str n: //property setter, returns nothing
+        .::str name_ = n //introduce field "name_" 
 
 
 Object query grammar
