@@ -751,11 +751,13 @@ properties:  def prop: and def prop=v: Example::
      def .smeth(a): //static method
         return a + .staticfield
 
-     def class(int a): //constructor
-        .ifield = a
+     //from super class constructor with params (0)  
+     def class() << (0): //constructor
+        .int ifield3 = 1 //introduce field with type
 
-     def class(): //constructor
-        .int ifield = 1 //introduce field with type
+     //constructor that depends on another one
+     def class(int a) < (): 
+        .ifield = a
 
      def(a): //instance callable
         return .ifield+a
@@ -774,6 +776,20 @@ properties:  def prop: and def prop=v: Example::
      def name = str n: //property setter, returns nothing
         .::str name_ = n //introduce field "name_" 
 
+
+Object Initialization
+======================
+It is important to check if all fields of an object is properly initialized.
+It seems this can be checked at Type Interpretation: since code is followed
+through for type inference, it is also possible to check if fields/variables
+are initialized (assigned to) or not. When there are branches in the code,
+a field/variable is considered fully initialized if and only if all branches
+initialize it. Meanwhile, the type interpretor also ensures that when 
+fields/variables are read, they are fully initialized, otherwise a warning/error
+mey be reported.
+
+No default values will be assumed, all fields/variables must be fully initialized
+before value reading is allowed.
 
 Object query grammar
 =====================
