@@ -776,6 +776,7 @@ properties:  def prop: and def prop=v: Example::
      def name = str n: //property setter, returns nothing
         .::str name_ = n //introduce field "name_" 
 
+Note for translating to Java: Java allows a method name to be the same as the class name.
 
 Object Initialization
 ======================
@@ -789,7 +790,14 @@ fields/variables are read, they are fully initialized, otherwise a warning/error
 mey be reported.
 
 No default values will be assumed, all fields/variables must be fully initialized
-before value reading is allowed.
+before value reading is allowed. This also provides the opportunity to check 
+if a field/variable is a "maybe" value: if it is assinged to a 'nil' value or 
+another "maybe" value.
+
+During type inference, all objects are essentially treated the same way 
+as scopes as they contain name definitions as scopes. If a name is defined 
+but never read, a warning can be given. In a class, a method might have never
+been used, it is also a warning, no code will be generated for that method.
 
 Object query grammar
 =====================
