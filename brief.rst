@@ -835,3 +835,11 @@ It is also possible to define a meta-class::
           #if attr in dir(.):
           #return .attr = value
           #return ._dict[attr] = value
+
+Parsing/Interpretation/Generation Pipeline
+===========================================
+Parser will generate a parse tree as input for type interpretation. 
+The parse tree has named subtrees and other supporting data fields to support
+type interpretation. Once the type interpretation is complete, the product
+is then read for code generation.
+
