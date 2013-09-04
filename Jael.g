@@ -46,6 +46,13 @@ suite: //locals[symtab, eminent] //Symbol Table
 	':' (stmts ';')? //no ';' to match ':'
 ;
 
+/* interface definition */
+ifdefStmt:
+'ifdef' modified 
+	( 'from' parent=qname )? ':'
+		( defs += defStmt | inits += assStmt )*
+;
+
 /*
  * class B in A with interfaces:
  */
@@ -53,11 +60,11 @@ suite: //locals[symtab, eminent] //Symbol Table
 classStmt:
 	'class' modified 
 		( 'from' parent=qname )?
-		( 'in' faces += qname (',' faces += qname)* )?
-		body = suite
+		( 'if' faces += qname (',' faces += qname)* )? ':'
+		( defs += defStmt | inits += assStmt )*
 ;
 
-defStmt 
+defStmt
 locals[int getIT(int k){ return 0; }
 public Map<String, String> sigs = new HashMap<String,String>();
 public Map<String, Object> defs = new HashMap<String,Object>()]

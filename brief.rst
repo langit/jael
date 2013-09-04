@@ -778,6 +778,7 @@ properties:  def prop: and def prop=v: Example::
 
 Note for translating to Java: Java allows a method name to be the same as the class name.
 
+
 Object Initialization
 ======================
 It is important to check if all fields of an object is properly initialized.
@@ -798,6 +799,26 @@ During type inference, all objects are essentially treated the same way
 as scopes as they contain name definitions as scopes. If a name is defined 
 but never read, a warning can be given. In a class, a method might have never
 been used, it is also a warning, no code will be generated for that method.
+
+The ':' In Grammar
+===================
+The separater ':' is a very active grammar element. It introduces sub-statements
+in a compound statement, such as in if, def, class, for, and while statements.
+It also helps form the "a if cond: b" expression.
+
+It also defines a variable in a obscure scope instead of the enclosing eminent scope,
+when it preceeds the defined variable, e.g. ":var = 3".
+This construct used in a class scope simply means less visibility. A private
+field can be defined with '::private_field=1', or if in a instance method, 
+".::private_field=1". similarly, "def::private_meth()" defines a private method.
+
+And when combined with '=' it forms the ':=' symbol, which assigns to 
+a symbol already defined in the nearest enclosing scope.
+Sometimes it needs to define a variable in a scope without initializing it, which 
+is simply done by the "var=." grammar construct (where the '.' means missing value).
+
+It is yet to know if ':' can further be overloaded with piping values into functions,
+so that "a:f" is the same as "f(a)".
 
 Object query grammar
 =====================
@@ -840,6 +861,6 @@ Parsing/Interpretation/Generation Pipeline
 ===========================================
 Parser will generate a parse tree as input for type interpretation. 
 The parse tree has named subtrees and other supporting data fields to support
-type interpretation. Once the type interpretation is complete, the product
+type interpretation. Once the type interpretation is complete, the parse tree
 is then read for code generation.
 
