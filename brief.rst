@@ -471,7 +471,7 @@ This way the problem is solved.
 
 There are eminent and obscure scopes.
 Obscure scopes belong to a complex statement (if, for, case, while). 
-Eminent scopes include  global, class, and function scopes.
+Eminent scopes include global, class, and function scopes.
 While a function scope is simple and only has a common layer,
 global and class scopes has finer controls of access.
 The "def/class" statements at the ground level
@@ -704,12 +704,12 @@ Funtional programming
 
 Any function can be applied to each element of an iterable, which
 results in a new iterable with elements being the returned values.
-"iterable:fun" is the grammar. the expression "1..5:log(.,2)" 
+"iterable@fun" is the grammar. the expression "1..5@log(.,2)" 
 produces an iterable object that gives log2 values of 1 to 5.
 if the object is not iterable, the whole object is passed to
-the function. For example: "123:print" will have 123 printed.
-This "2..5,3..6:log" gives [log(2,3), log(3,4), log(4,5)].
-It is easy to chain functions: "items:cos:sin"
+the function. For example: "123@print" will have 123 printed.
+This expression "2..5,3..6@log" gives [log(2,3), log(3,4), log(4,5)].
+It is easy to chain functions: "items@cos@sin"
 evaluates to [sin(cos(x)) for x in items].
 
 
@@ -717,17 +717,17 @@ Function definition grammar
 ========================================
 Define a private function (only availble in scope of definition) this way::
 
-  def::mult:int(a:int, b:int):
+  def::mult(int a, int b) int:
       return a*b
 
 Define a protected function (available in package and for inheritance) this way::
 
-  def:mult:int(a:int, b:int):
+  def:mult(int a, int b) int:
       return a*b
 
 Define a public one like this::
 
-  def mult:int(a:int, b:int):
+  def mult(int a, int b) int:
       return a*b
 
 A lambda function is defined as "def(x,y) x**2+y**2".
@@ -737,58 +737,65 @@ Class definition and initialization
 ===================================
 A class definition is a set of declarations for: fields, methods, properties.
 Methods are similar to functions, static ones starts with '.', instance ones without.
-Special methods: initializer def():.
-fields: static and instance, with possible initial values, like an assignment statement.
+Special methods: initializers def.(...): and default init def .:.
+fields: static fields are declared in class scope, with possible initial values, like an assignment statement.
 properties:  def prop: and def prop=v: Example::
 
   class myclass from parentclass:
 
      .staticfield = 1 //declare and init a static field
-
-     def .: //class initializer
-        .staticfield2 = 2 //introduce fields anywhere 
+     //static init code with local variables goes here
+     //static methods can be invoked here
+     //while instance methods can not
 
      def .smeth(a): //static method
         return a + .staticfield
 
+     def .: //default instance initializer, define/init instance fields
+        .ifield2 = 3 //declare & init an instance field
+        .ifield3 = 2 //introduce fields anywhere in the class
+
      //from super class constructor with params (0)  
-     def class() << (0): //constructor
+     def .() << (0): //constructor
         .int ifield3 = 1 //introduce field with type
 
      //constructor that depends on another one
-     def class(int a) < (): 
+     def .(int a) < (): 
         .ifield = a
 
-     def(a): //instance callable
+     def(a): //make a instance callable 
         return .ifield+a
 
-     ifield2 = 3 //declare an instance field
      def meth(a) int @atomic: //instance method
         return a+.ifield+.staticfield
 
      def +(a): //instance operator
         return .ifield + a
 
-     str ::name_; //declare a private field for property
      def name: //property getter
         return .name_ //holding field
 
      def name = str n: //property setter, returns nothing
-        .::str name_ = n //introduce field "name_" 
+        .::str name_ = n //defined private field "name_" 
 
+Note: the callable definition, and the static callable is the constructor
 Note for translating to Java: Java allows a method name to be the same as the class name.
 
 
 Object Initialization
 ======================
+
 It is important to check if all fields of an object is properly initialized.
 It seems this can be checked at Type Interpretation: since code is followed
 through for type inference, it is also possible to check if fields/variables
 are initialized (assigned to) or not. When there are branches in the code,
 a field/variable is considered fully initialized if and only if all branches
-initialize it. Meanwhile, the type interpretor also ensures that when 
+fully initialize it (this can be applied recursively to all branches as well). 
+Meanwhile, the type interpretor also ensures that when 
 fields/variables are read, they are fully initialized, otherwise a warning/error
-mey be reported.
+mey be reported. A warning is reported if multiple partial initializations are 
+attempted sequentially before a reading, otherwise (only one attempt before a reading)
+an error is reported.
 
 No default values will be assumed, all fields/variables must be fully initialized
 before value reading is allowed. This also provides the opportunity to check 
@@ -816,9 +823,6 @@ And when combined with '=' it forms the ':=' symbol, which assigns to
 a symbol already defined in the nearest enclosing scope.
 Sometimes it needs to define a variable in a scope without initializing it, which 
 is simply done by the "var=." grammar construct (where the '.' means missing value).
-
-It is yet to know if ':' can further be overloaded with piping values into functions,
-so that "a:f" is the same as "f(a)".
 
 Object query grammar
 =====================
