@@ -1,0 +1,49 @@
+//"""x=''///*.ps/.match("abc.ps")'';""";
+
+.public_global_field
+.:package_global_field
+.::private_global_field
+
+//if referred to by methods (a closure reference), 
+//a local_variable can be simply implemented the same 
+//way as a private_global_field: private static field 
+//of the module class
+local_variable
+//local statements...
+
+def .public_global_meth():
+def .:package_global_meth():
+def .::private_global_meth():
+def local_meth():
+
+//interface (explicit rather than implied)
+ifdef some_interface from parent_if:
+
+class m from n in some_interface:
+	.public_static_field 
+    .:package_static_field
+    .::private_static_field
+
+    public_instance_field
+    :package_instance_field
+    ::private_instance_field
+
+    def ..: //static initializer
+        for i in 3...4: //inclusive range
+            puts i
+        for i in 3..4: //non-inclusive range
+            puts i
+
+    def .: //instance common initializer
+      .:package_access
+      .public_access 
+      .::private_access
+      local_variable
+
+    def .public_static_meth():
+    def .:package_static_meth():
+    def .::private_static_meth():
+
+    def public_instance_meth():
+    def :package_instance_meth():
+    def ::private_instance_meth():

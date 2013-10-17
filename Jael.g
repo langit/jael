@@ -22,6 +22,7 @@ stmt: classStmt
 	| blockStmt
 	| assignStmt
 	| exprStmt
+	| tryStmt
 ;
 
 breakStmt: 'break' (label=ID)? ;
@@ -99,7 +100,7 @@ forStmt:
  
 whileStmt:
 	('@' label =ID)? 
-	'while' cond = expr 
+	'while' expr ('as' cond)?
 		body = suite
 	('else' 
 		falsified = suite)?
@@ -117,9 +118,13 @@ ifStmt:
 exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
-	'class'? 'case' condval = expr ':'
+	'case' expr ('as' casevar)? ':'
 	('in' vals += exprlist branches += suite)+
 	('else' branches += suite)?
+;
+
+tryStmt:
+   'try' suite ('catch' id suite)* ('ensure' suite)?
 ;
 
 //mislist:  expr? (',' expr?)* ;

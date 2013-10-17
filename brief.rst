@@ -730,7 +730,8 @@ Define a public one like this::
   def mult(int a, int b) int:
       return a*b
 
-A lambda function is defined as "def(x,y) x**2+y**2".
+A lambda function is defined as "def(x,y) x**2+y**2" or 
+"def(x,y){...}" with multiple statements. 
 
 
 Class definition and initialization
@@ -738,8 +739,16 @@ Class definition and initialization
 A class definition is a set of declarations for: fields, methods, properties.
 Methods are similar to functions, static ones starts with '.', instance ones without.
 Special methods: initializers def.(...): and default init def .:.
-fields: static fields are declared in class scope, with possible initial values, like an assignment statement.
-properties:  def prop: and def prop=v: Example::
+fields: static fields are declared in class scope, with possible initial 
+values, like an assignment statement. For fields, package level fields 
+are plain assignments (in class scope for class fields or in the default 
+init def scope for instance fields, also in module scope for module 
+fields -- this feature could cause problems: what if a field defined in 
+another method is not intended to be that in the init method (that 
+variable can be hidden by :)? how to access a public global variable 
+in a class defined in that module? using ..<name> would work if 
+not shaded, or use <module>.<name> if shaded).
+properties:  def prop: and def prop=v:. Example::
 
   class myclass from parentclass:
 
