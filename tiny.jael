@@ -20,12 +20,15 @@ def local_meth():
 ifdef some_interface from parent_if:
 
 class m from n in some_interface:
+    //invisible scope
 	.public_static_field 
     .:package_static_field
+    .:-protected_static_field
     .::private_static_field
 
     public_instance_field
     :package_instance_field
+    :-protected_instance_field
     ::private_instance_field
 
     def ..: //static initializer
@@ -42,8 +45,10 @@ class m from n in some_interface:
 
     def .public_static_meth():
     def .:package_static_meth():
+    def .:-protected_static_meth():
     def .::private_static_meth():
 
     def public_instance_meth():
     def :package_instance_meth():
+    def :-protected_instance_meth():
     def ::private_instance_meth():

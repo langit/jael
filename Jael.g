@@ -51,7 +51,7 @@ suite: //locals[symtab, eminent] //Symbol Table
 ifdefStmt:
 'ifdef' modified 
 	( 'from' parent=qname )? ':'
-		( defs += defStmt | inits += assStmt )*
+		( defs += defStmt | inits += assignStmt )*
 ;
 
 /*
@@ -62,7 +62,7 @@ classStmt:
 	'class' modified 
 		( 'from' parent=qname )?
 		( 'if' faces += qname (',' faces += qname)* )? ':'
-		( defs += defStmt | inits += assStmt )*
+		( defs += defStmt | inits += assignStmt )*
 ;
 
 defStmt
@@ -100,7 +100,7 @@ forStmt:
  
 whileStmt:
 	('@' label =ID)? 
-	'while' expr ('as' cond)?
+	'while' expr ('as' ID)?
 		body = suite
 	('else' 
 		falsified = suite)?
@@ -118,13 +118,13 @@ ifStmt:
 exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
-	'case' expr ('as' casevar)? ':'
+	'case' expr ('as' ID)? ':'
 	('in' vals += exprlist branches += suite)+
 	('else' branches += suite)?
 ;
 
 tryStmt:
-   'try' suite ('catch' id suite)* ('ensure' suite)?
+   'try' suite ('catch' ID suite)* ('ensure' suite)?
 ;
 
 //mislist:  expr? (',' expr?)* ;
@@ -187,6 +187,7 @@ expr:
 	| expr op=('+'|'-') expr # Arith
 	| expr op=('<'|'<='|'>'|'>=') expr # Comp
 	| expr ('if' expr ':' expr)+  # Forked
+    | expr ('..'|'...') expr ('++' expr)? #Ranger
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
 //    | expr expr+ #Concat
@@ -195,8 +196,8 @@ expr:
 	| '(' expr ')' #Group
 	| modified #JustId //semantic check on modifiers
 	| '.' attr ('@' mods+=modifier)* #OwnAttr
-	//|a,b|{c=a+b; ret c*c}
-	| '|' idlist? '|' '{' stmts ';'? '}' #Lamb
+	//def(a,b){c=a+b; return c*c}
+	| 'def' '(' idlist? ')' '{' stmts ';'? '}' #Lamb
 	//between parts there is a hidden '/'
     | REGEX #Regex
 	| '[' exprlist? ']' #List
