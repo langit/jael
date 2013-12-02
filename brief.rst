@@ -654,11 +654,14 @@ are closure variables.
 
 There are two considerations for closure formation: 
 1. a closure coincides with a method signature;
+   NO, that's not the most general case! a closure
+   can even happen inside a for-loop where local
+   variables serve as closure variables.
 2. a closure must serve all enclosed open methods.
 If 2 can not be satisfied, then there must be some
 open method that refers to a variable beyond the
 method that the closure coincides with. Thus it is
-clear the closure should coincides with a containing method.
+clear the closure should coincide with a containing method.
 Once both conditions are met, all closure variables will
 become the member variables of the closure class.
 

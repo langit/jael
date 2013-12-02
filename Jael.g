@@ -60,9 +60,11 @@ ifdefStmt:
 
 classStmt:
 	'class' modified 
-		( 'from' parent=qname )?
-		( 'if' faces += qname (',' faces += qname)* )? ':'
-		( defs += defStmt | inits += assignStmt )*
+    ( //enum as a special kind of class, no new keywords
+       '{'ID ('(' args=exprlist ')')? (',' ID ('(' args=exprlist ')')? )*'}' 
+    |  ( 'from' parent=qname )?
+	   ( 'in' faces += qname (',' faces += qname)* )? 
+    ) (':' ( defs += defStmt | inits += assignStmt )*)?
 ;
 
 defStmt
@@ -70,6 +72,7 @@ locals[int getIT(int k){ return 0; }
 public Map<String, String> sigs = new HashMap<String,String>();
 public Map<String, Object> defs = new HashMap<String,Object>()]
 :
+    ('@' decos+=qname)*
 	'def' modified (':' type=qname)? 
 		( '=' field=ID |  | //property definition
 	//def prop@set(v): .prop := v; //define setter
@@ -83,25 +86,26 @@ public Map<String, Object> defs = new HashMap<String,Object>()]
 blockStmt
 locals[Map<String, Object> defs = new HashMap<String,Object>()]
 : 
-	('@' ID)? ':' //'for', 'while' labels have no ':'
+	('@' label =ID )? //'for', 'while' labels have no ':'
 		body=suite
 	//a potential do-while loop
-	('while' ':' expr)? 
+	(';' 'loop' expr)? 
 ;
 
+// for i in 1..2 @lab:
 forStmt: 
-	('@' label =ID)? 
-	'for' (counter=locid '=' cstart=expr ',')? 
-		loopvar = loclist 'in' iterable=expr
-		body = suite
+('@' label =ID)? 
+	'for' (counter=locid ('=' cstart=expr)? ',')? 
+	loopvar = loclist (':' dict_value = ID)? 'in' iterable=expr
+        body = suite
 	('else' //with the help of a label
 		exhausted = suite )?
 ;
  
 whileStmt:
-	('@' label =ID)? 
+('@' label =ID)? 
 	'while' expr ('as' ID)?
-		body = suite
+	    body = suite
 	('else' 
 		falsified = suite)?
 ;
@@ -118,41 +122,35 @@ ifStmt:
 exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
+	('@' label =ID)? 
 	'case' expr ('as' ID)? ':'
-	('in' vals += exprlist branches += suite)+
-	('else' branches += suite)?
+	('in' vals += exprlist branches += suite ';')+
+	('else' branches += suite ';')?
 ;
 
 tryStmt:
-   'try' suite ('catch' ID suite)* ('ensure' suite)?
+   'try' suite (';' 'catch' ID suite)* (';' 'ensure' suite)?
 ;
 
 //mislist:  expr? (',' expr?)* ;
-
 typelist:
 	typesig (',' typesig)*
 ;
 
-simplet: //simple type
-	qname ('<' typelist '>')? //such as: list of some type
+typesig: //simple type
+	  qname ('<' typelist '>')? //such as: list of some type
 	//possibly (jagged) array or function
-	| simplet ('[' ']' | '(' typelist? ')' )
-	| complet ('[' ']' | '(' typelist? ')' )
-	//regular multidim arrays can be added later
+	| typesig ('[' ']' |'@' '(' typelist? ')' )
+	//regular multi-dimension arrays can be added later
 	//like: x=int@[3,4] creates a 3 by 4 matrix 
+    |'<' (lo=typesig ('in'|'from'))? wild='?' 
+         (('in'|'from') hi=typesig)? '>' //bounds
+    |'<' typesig (',' typesig )* '>' //tuple type
 ;
 
-//type signature, as type constraint or specifier
-complet: //complex type
-'<' '?' ('in' hi=simplet)? '>'//wild card
-|'<' lo=simplet ('in' wild='?' ('in' hi=simplet)?)? '>' //bounds
-|'<' typesig (',' typesig )* '>' //tuple type
-;
-
-typesig: complet|simplet;
-
-astarget: //assignment target
-locid (':' typesig)? | expr '.' ID ;
+target: //assignment target
+   ('.')? (':')* (typesig)? ID
+ | target ('(' (args=exprlist)? ')')? ('.' ID | '[' idx=exprlist ']');
 
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
@@ -163,7 +161,7 @@ locid (':' typesig)? | expr '.' ID ;
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: 
-	astarget ('='|AUGAS) expr 
+	target ('='|AUGAS) expr 
 ;
 
 asid: name=ID ('as' rename=ID)? ;
@@ -172,14 +170,14 @@ importStmt: 'import' name=qname ('.' forstar='*' |
     'for' forids+=asid (',' forids+=asid)* )? 
 ;
 
-exprStmt: expr (':' exprlist)? //may have simple call
+exprStmt: exprlist (':' target)? //simple call
 ;
 
 expr: 
 //cast as binary operator of the same pirority as '.'/'@'.
 //can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
-      expr '!' (ID|'('qname')') #Cast
+      expr '!' (ncast=ID | '(' qncast=qname ')') #Cast
 	| expr '.' attr ('@' mods+=modifier)* #DotAttr //..: super
     | expr '(' exprlist? ')' #Call
     | expr '[' exprlist ']' #Index
@@ -187,7 +185,7 @@ expr:
 	| expr op=('+'|'-') expr # Arith
 	| expr op=('<'|'<='|'>'|'>=') expr # Comp
 	| expr ('if' expr ':' expr)+  # Forked
-    | expr ('..'|'...') expr ('++' expr)? #Ranger
+    | expr RANGE expr ((('++'|'--') expr)|('+'|'-'))? #Ranger
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
 //    | expr expr+ #Concat
@@ -201,7 +199,8 @@ expr:
 	//between parts there is a hidden '/'
     | REGEX #Regex
 	| '[' exprlist? ']' #List
-	| ('{'exprlist?'}' | complet ('[' expr ']')+) #Array
+    //int[,] x = int@[2,3];
+	| ('{'exprlist?'}' | typesig '@' '[' exprlist ']' ) #Array
 	| '<' exprlist? '>' #Set
 	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
     | TOPN expr (':'expr)? (TMID expr (':'expr)? )*  TEND #Template
@@ -230,6 +229,9 @@ primitiveType
     |   'double' #3.0f
     ;
 */
+
+RANGE: '...'|'..';
+DOT: '.';
 AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
 
 ID  :
@@ -241,7 +243,10 @@ INT : '0'
     ;
 
 FLOAT
-    :   INT '.' ('0'..'9' |'0'..'9' ('_'? '0'..'9')*) EXPONENT?
+      //no more syntactic predicates in antlr4:
+    : //(INT '.' ~'.')=> INT '.' DIGITS? EXPONENT?
+      //So we live with this for now:
+      INT '.' '0'..'9' ('_'? '0'..'9')* EXPONENT?
     |   '.' '0'..'9' ('_'? '0'..'9')* EXPONENT?
     |   INT EXPONENT
     ;

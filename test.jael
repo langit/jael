@@ -1,5 +1,9 @@
 x = 'a';
 g = /ok//and find/;
+
+for k:v in ['a':9, 'b':5]:
+    k, "=>", v : puts
+
 def fun(a,b):
 	if a@outer>0: 
 		s = a;
@@ -14,10 +18,15 @@ def fun(a,b):
 		fun(2,3);
 	;
 	case x:
-		in 3: puts:x; 
-			continue; --- break by default
-		in 4: puts:x;
-		else: pass;
+		in 3,1: 
+			puts:x; 
+		;
+		in 4: 
+			x : puts; //pipe
+			continue case; //break by default
+		;
+		else: 
+		;
 	;
 ;
 
@@ -36,7 +45,9 @@ array:int[] = {2,3,4,5};
 qq = {"a", "b", "c"}; ---array
 xb = <int>[2]; 
 seta = <2,3,5>;
-lam = |a,b|{a+b};
+lam = def(a,b) a+b;
+lam2 = def(a,b) {a++; b++; a+b}
+
 class A:
 	stat = /[0-9]+/;
 	count = 0;
