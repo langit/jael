@@ -245,9 +245,9 @@ INT : '0'
 FLOAT
       //no more syntactic predicates in antlr4:
     : //(INT '.' ~'.')=> INT '.' DIGITS? EXPONENT?
-      //So we live with this for now:
-      INT '.' '0'..'9' ('_'? '0'..'9')* EXPONENT?
-    |   '.' '0'..'9' ('_'? '0'..'9')* EXPONENT?
+      //So we use this semantic gate:
+      INT '.' {_input.LA(1) != '.'}? ('_'? '0'..'9')* EXPONENT?
+    |   '.' ('_'? '0'..'9')* EXPONENT?
     |   INT EXPONENT
     ;
 
