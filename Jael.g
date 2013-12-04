@@ -6,10 +6,11 @@ import java.util.Map;
 import java.util.HashMap;
 }
 
-stmts: seq+=stmt (';' seq+=stmt)* ;
+stmts: (seq+=stmt)*;
 
-module: stmts ';' EOF ;
+module: stmts EOF;
 
+//a statement has its own ending ';'
 stmt: classStmt
     | defStmt
 	| ifStmt
@@ -25,8 +26,11 @@ stmt: classStmt
 	| tryStmt
 ;
 
-breakStmt: 'break' (label=ID)? ;
-loopStmt: 'continue' (label=ID)?;
+breakStmt: 'break' (label=ID)? ('if' expr)? ';' 
+;
+
+loopStmt: 'continue' (label=ID)? ('if' expr)? ';' 
+;
 
 qname: names+=ID ('.' names+=ID)*;
 idlist: ids+=ID (',' ids+=ID)* ;
@@ -43,28 +47,24 @@ modifier: 'class'| ID;
 //'class'|'private'|'public'|'protected'|'final';
 modified: name=ID ('@' mods+=modifier)*;
 
-suite: //locals[symtab, eminent] //Symbol Table 
-	':' (stmts ';')? //no ';' to match ':'
-;
-
-/* interface definition */
-ifdefStmt:
-'ifdef' modified 
-	( 'from' parent=qname )? ':'
-		( defs += defStmt | inits += assignStmt )*
-;
-
 /*
  * class B in A with interfaces:
  */
 
 classStmt:
+    //@interface @abstract -- compile-time decorators
+	('@' decors += ID)* 
 	'class' modified 
     ( //enum as a special kind of class, no new keywords
-       '{'ID ('(' args=exprlist ')')? (',' ID ('(' args=exprlist ')')? )*'}' 
-    |  ( 'from' parent=qname )?
-	   ( 'in' faces += qname (',' faces += qname)* )? 
-    ) (':' ( defs += defStmt | inits += assignStmt )*)?
+       '{' ID ('(' exprlist ')')? 
+           (',' ID ('(' exprlist ')')? )*
+        '}' 
+    | //normal class def 
+      ( 'from' parent=qname )?
+	  ( 'in' faces += qname (',' faces += qname)* )? 
+    ) //body of class 
+    (':' ( defs += defStmt | inits += assignStmt )*)?
+    ';'
 ;
 
 defStmt
@@ -72,24 +72,23 @@ locals[int getIT(int k){ return 0; }
 public Map<String, String> sigs = new HashMap<String,String>();
 public Map<String, Object> defs = new HashMap<String,Object>()]
 :
-    ('@' decos+=qname)*
-	'def' modified (':' type=qname)? 
-		( '=' field=ID |  | //property definition
+    ('@' decors+=qname)* //compile-time decorators
+	'def' modified 
+	(  
+      //property definition
+      (type=qname)? ('=' (setarg=ID)?)? (':' body=stmts)? 
 	//def prop@set(v): .prop := v; //define setter
 	//note that we use ":=" to assign to field,
 	//by-passing the property setter!
-		'(' (params=idlist)? ')' 
-			body=suite 
-		)
+	| 
+      '(' (params=idlist)? ')' (type=qname)? (':' body = stmts)?
+    ) ';'
 ;
 
 blockStmt
 locals[Map<String, Object> defs = new HashMap<String,Object>()]
 : 
-	('@' label =ID )? //'for', 'while' labels have no ':'
-		body=suite
-	//a potential do-while loop
-	(';' 'loop' expr)? 
+	('@' label =ID )? ':' body=stmts ';'
 ;
 
 // for i in 1..2 @lab:
@@ -97,26 +96,29 @@ forStmt:
 ('@' label =ID)? 
 	'for' (counter=locid ('=' cstart=expr)? ',')? 
 	loopvar = loclist (':' dict_value = ID)? 'in' iterable=expr
-        body = suite
-	('else' //with the help of a label
-		exhausted = suite )?
+        ':' body = stmts
+	('else' ':' //with the help of a label
+		exhausted = stmts )?
+';'
 ;
  
 whileStmt:
-('@' label =ID)? 
-	'while' expr ('as' ID)?
-	    body = suite
-	('else' 
-		falsified = suite)?
+    ('@' label =ID)? 
+	'while' (expr ('as' ID)?)? ':'
+	    body = stmts
+	('else' ':' 
+		other = stmts)?
+    ';'
 ;
 
 ifStmt:
-	'if' cond += expr 
-		branches += suite
-	('elif' cond+=expr 
-		branches += suite)*
-	('else'
-		branches += suite)?
+	'if' cond += expr ':'
+		branches += stmts
+	('elif' cond+=expr ':'
+		branches += stmts)*
+	('else' ':'
+		branches += stmts)?
+    ';'
 ;
 
 exprlist: exprs += expr (',' exprs += expr)* ;
@@ -124,12 +126,16 @@ exprlist: exprs += expr (',' exprs += expr)* ;
 caseStmt: //need more thorough thinking...
 	('@' label =ID)? 
 	'case' expr ('as' ID)? ':'
-	('in' vals += exprlist branches += suite ';')+
-	('else' branches += suite ';')?
+	   ('in' vals += exprlist ':' branches += stmts)+
+	   ('else' ':' branches += stmts)?
+    ';'
 ;
 
 tryStmt:
-   'try' suite (';' 'catch' ID suite)* (';' 'ensure' suite)?
+   'try' ':' stmts 
+   ('catch' ID ':' stmts)* 
+   ('ensure' ':' stmts)?
+   ';'
 ;
 
 //mislist:  expr? (',' expr?)* ;
@@ -161,16 +167,17 @@ target: //assignment target
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: 
-	target ('='|AUGAS) expr 
+	target ('='|AUGAS) expr ';'
 ;
 
 asid: name=ID ('as' rename=ID)? ;
 
 importStmt: 'import' name=qname ('.' forstar='*' | 
     'for' forids+=asid (',' forids+=asid)* )? 
+   ';'
 ;
 
-exprStmt: exprlist (':' target)? //simple call
+exprStmt: exprlist (':' target)? ';' //simple call
 ;
 
 expr: 
@@ -239,15 +246,15 @@ ID  :
 ;
 
 INT : '0'
-	| '1'..'9' ('_'? '0'..'9')*
+	| '1'..'9' Undig*
     ;
 
 FLOAT
       //no more syntactic predicates in antlr4:
     : //(INT '.' ~'.')=> INT '.' DIGITS? EXPONENT?
       //So we use this semantic gate:
-      INT '.' {_input.LA(1) != '.'}? ('_'? '0'..'9')* EXPONENT?
-    |   '.' ('_'? '0'..'9')* EXPONENT?
+      INT '.' {_input.LA(1) != '.'}? ('0'..'9' Undig*)? EXPONENT?
+    |   '.' '0'..'9' Undig* EXPONENT?
     |   INT EXPONENT
     ;
 
@@ -268,6 +275,9 @@ REGEX: '/:' (ESC_SEQ | '\\' ('+'|'?'|'*'|'('|')'|'['|']'|'{'|':/')
 
 INTDIV: '/?' //integer division
 ;
+
+fragment
+Undig: '_'? '0'..'9' ;
 
 fragment
 EXPONENT : ('e'|'E') ('+'|'-')? '0'..'9' ('_'? '0'..'9')* ;
