@@ -16,7 +16,7 @@ We may note some common features in those languages
 conducing to that goal. There is no need to 
 specify the type of a variable, as the language is 
 dynamic, their types are determined at runtime. 
-Sometimes you don't even to declare a variable before
+Sometimes you don't even need to declare a variable before
 using it. Secondly, functions/methods are first-class
 citizens, which means they 
 can be passed around just like other objects. 
@@ -36,97 +36,99 @@ nobody would blame it if things can speed up.
 In those cases when performance is critical,
 static languages are the only choice.
 Static languages must be compiled to executable
-machine code first, and the compilation require 
+machine code first, and the compilation requires
 all type information explicitly specified in 
-the code to succedd, together with other rigor coding 
+the code, together with other rigor coding 
 rules to be strictly observed before the compiler stops wining.
-As the saying goes, "more words, more faults,"
+Since 'less is better', and 'more words, more faults',
 the verbosity of static languages makes it harder to learn,
-more difficult to code with, easier to make mistakes, 
+more difficult to write, easier to make mistakes, 
 and harder to read and maintain.
-It would be very nice to have a static language
-looks and feels like a dynamic one, and runs just as fast
-as a static one. Hence the birth of a language named "Yael".
-
-Yael shows us how "dynamic" can a static language be.
+It would be very nice to have a language that
+looks and feels like a dynamic one, but runs just as fast
+as a static one. Hence the birth of the language named "Jael".
 To build upon what's already there, the language is
-designed and translated into a target language, which is another
+first translated to a target language, which is another
 high level static language. The target language is Java at 
-this moment, since Java offers garbage collection, it would
-be a more friedly environment to work with.
+this moment, as Java is popular and has lots of libraries.
+
+Jael shows us how "dynamic" a static language could be.
 In a truly dynamic language, a variable can change its
 type of value on the fly, while a static language requires
-that a variable must be consistent in its type. 
+that a variable must be type consistent. 
 This restriction is at the core of static compilation, and 
-lifting it means departing from the paradigm of static languages.
+lifting it would open up a whole can of worms when
+translating to static languages.
 So here comes the first pilar of design: 
-a symbol in Yael must be used consistently
-to carry values in one single class/type.
-Once this rule is observed, there are actually 
-plenty of room for other language instruments that
-boost up productivity in dynamic languages, 
-such as mentioned in the beginning.
+a symbol in Jael must be type consistent.
+Aside from this restriction, there are still
+plenty of room to adopt most of the luring language features 
+in dynamic languages that is alread discussed.
 
-You might be a little disappointed in the idea of monotyped
-variables, but a method/function in Yael is more like an 
-*implicit template*, thus an argument or local 
-variable may end up taking totally different types!
+Jael appears to allow dynamic argument types to methods.
+A method/function in Jael is more like an 
+*implicit template*, for each combination of argument types 
+passed to the it, a distinct version is generated, where 
+even local variables may end up taking different types!
 The underlying mechanism in static languages is called
 method overloading, which allows a method to have different 
-(overloaded) versions that accepts differet types of parameters.
-Thus different value types of the same parameter may be passed
+(overloaded) versions that accept differet argument types.
+Thus different argument types may be passed
 to functions/methods, as long as the code in the
 body of the function/method "makes sense" with those types.
-Clearly, here "makes sense" simply means if that code can 
-be statically compiled or not, after types being inferred 
-(which will be discussed in full details shortly).
-If it "makes sense", an overloaded version of this method
-is generated in parallel to other overloaded versions.
-As such, in each overloaded version, the corresponding
-variable can turn out to be of different types.
-With automatic paralell overloading in translation, 
-a function/method in Yael becomes much more
-powerful than it meets the eye, as different types of
-values can be passed in with possibly different returned
-types of values, and the code is reused without any additional
-effort from the coder.
+The sense-making involves type interpretation for the 
+expressions and variables in the method, to see 
+if static compilation is OK or not. Type interpretation 
+is a dyanmic way of doing type inference, so to speak,
+which will be discussed in full details shortly.
+If it "makes sense", a version of this method
+is generated, overloading it. In an overloaded version, 
+a variable may not be of the same type as in another version.
+Thus a function/method in Jael becomes much more
+powerful than meets the eye, which is essentially a template 
+that serves as a description of a general algorithm,
+for unlimited reuse without additional effort of the coder.
 
-As in dynamic languages, a variable in Yael needs no 
-declaration before its use, and its consistent 
-type would be inferred from code analysis before compilation.
+As in dynamic languages, a variable in Jael needs no 
+declaration before its use, and its (consistent) 
+type would be inferred from code analysis before code generation.
 Type inference (TI -- references, tutorials here) 
-is the analysis of a piece of code (such 
-as in the body of a method) to find out if it "makes sense".
+is the analysis of a chunk of code (such 
+as in the body of a method) to find out the type of the
+expressions and variables there.
 TI will find out the types of all of the variables and, as
 types also determine the operations that is available,
-and it thus tells if that peice of code "makes sense" or not.
+and it thus tells if that code "makes sense" or not.
 To do TI on a variable, the range of code to consider 
 is naturally the scope of the variable. The scope of a 
 variable is simply the context (code range) within which the 
-variable lives. What makes the traditional TI difficult is that
-the parameter types of a function/method is unknown,
+variable lives and works. 
+What makes TI difficult is that
+the argument types of a function/method is unknown,
 so there are some "free" variables to deal with.
 For those "free" variables, code analysis will produce 
-a list of requirements on the type of a parameter, which
+a list of requirements on the type of an argument, which
 is called a type contract (-- references, tutorials).
 For example, a contract may require that the type must have
-such and such a method, which can take some kind of parameters,
-and should return values of such kind (which may be described
-by another contract), etc. 
+such and such a method, etc. 
 By analyzing the body of the function/method, a
-contract is discovered on each of the parameters,
+contract is discovered on the type of each argument,
 which is called contract analysis.
-Any types for the parameters are allowed as long
+Any type for an argument is allowed as long
 as the contract is satisfied. 
+
 A complete contract analysis would be difficult,
-and Yael does not need it. First, it is not necessary
-to generate all overloaded versions of a method/function
-for all known type combinations that satisfies the contract.
-Yael generates overloaded versions on demand -- that is, 
+and Jael does not need it. First, it is not necessary
+to generate all versions of a method/function
+whose argument type combination satisfies the contract.
+Jael generates overloaded versions on demand -- that is, 
 only when at the sight of an actuall calling of a 
-method/function, where all the parameter types are known.
-This greatly simplifies type inferencing, as it eliminates
-all "free" variables from the game.
+method/function, where all the argument types are precisely known.
+This greatly simplifies type inference, as it eliminates
+all "free" variables. In fact, the type inference of Jael
+works through something similar to interpretation, only that
+if-statements will have all branches executed in order, 
+and loop-statements always get executed once and no more.
 
 To infer the types of variables of simple types 
 (in constrast to collection types), it is 
@@ -164,9 +166,10 @@ the union type is uncertain. On the one hand,
 the nearest common ancestor is a reasonable candidate,
 on the other hand, any shared interface could be another.
 An agreeable approach here is to let the code analyzer
-would first try the type union operation
+first try the type union operation
 according to the inheritance tree and ignoring the interfaces. 
-If that does not work, it would then look at common interfaces,
+If that does not yield a type that "makes sense", 
+it would then look at common interfaces,
 choosing any one that would make the code work (because 
 interfaces are not about implementation, so whichever that 
 works would be fine). If none works, the code is considered bad.
@@ -195,8 +198,8 @@ with simple types, when passed to a function/method as
 an argument, assignment to the argument in the function 
 body that entails type union only requires a more general
 type on the argument of the function, and there is no need
-to make type adjustments to the variable that holds the 
-simple-typed value passed in as an argument.
+to make type adjustments to the variable in the caller's scope 
+that holds the simple-typed value passed in as an argument.
 If a collection (say a list) with element type A
 is considered a subtype of a list with element type B if
 B is a subtype of A, then the problem is reduced to the
@@ -313,6 +316,13 @@ generic element type (the "object" type at the root of the
 object system), and then use the "in" operator to tell
 if an element belongs to a particular type or not, and
 then cast it into that type and perform any desired operations.
+
+Side note: a named tuple can have names for each element.
+A tuple with all elements of the same type can be indexed,
+which can also have name (implemented in C with union)::
+   a = (x=1, y=3); //a.x==1, a[0]==1
+   //C: typedef a union{int x, y; int __item__[2];};
+
 
 
 Statically compile a truly dynamic language

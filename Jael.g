@@ -125,9 +125,9 @@ exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
 	('@' label =ID)? 
-	'case' expr ('as' ID)? ':'
-	   ('in' vals += exprlist ':' branches += stmts)+
-	   ('else' ':' branches += stmts)?
+	'case' expr ('as' ID)?':'
+	('in' vals += exprlist ':' branches += stmts)+
+	('else' ':' branches += stmts)?
     ';'
 ;
 
@@ -198,11 +198,12 @@ expr:
 //    | expr expr+ #Concat
 //format values: expr:%3f
 //format_expr: expr ':%' ...
+    | expr (',' expr)* (MonoSend|SequSend) target #Send
 	| '(' expr ')' #Group
 	| modified #JustId //semantic check on modifiers
 	| '.' attr ('@' mods+=modifier)* #OwnAttr
 	//def(a,b){c=a+b; return c*c}
-	| 'def' '(' idlist? ')' '{' stmts ';'? '}' #Lamb
+	| 'def'  '(' idlist? ')' (expr | '{' stmts ';'? '}') #Lamb
 	//between parts there is a hidden '/'
     | REGEX #Regex
 	| '[' exprlist? ']' #List
@@ -210,7 +211,7 @@ expr:
 	| ('{'exprlist?'}' | typesig '@' '[' exprlist ']' ) #Array
 	| '<' exprlist? '>' #Set
 	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
-    | TOPN expr (':'expr)? (TMID expr (':'expr)? )*  TEND #Template
+    | TOPN expr (TMID expr)*  TEND #Template
 	| CHAR #Char
 	| INT #Int
 	| FLOAT #Float
@@ -237,12 +238,12 @@ primitiveType
     ;
 */
 
-RANGE: '...'|'..';
+RANGE: '...' | '..';
 DOT: '.';
-AUGAS: '*='|'/='|'%='|'+='|'-='|':=';
+AUGAS: '*=' | '/=' | '%=' | '+=' | '-=' | ':=';
 
-ID  :
-   ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
+ID  : ('a'..'z'|'A'..'Z'|'_') 
+      ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
 ;
 
 INT : '0'
@@ -265,19 +266,37 @@ STR
     :  '"' (ESC_SEQ | ~('\\'|'"') )* '"'
     ;
 
-TOPN :'"""' (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'';
-TMID :'\'\''(ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'';
-TEND :'\'\''(ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '"""';
+//send elements as multiple parameters
+//x,y => fun  <==> fun(x,y)
+MonoSend: '=>' ; 
+//send one element at a time:
+//x,y,z :: fun <==> fun(x), fun(y), fun(z)
+SequSend: '::' ; 
+//star notation on receiving function:
+//x,y :: fun(*) <==> fun(*x), fun(*y)
+//x,y :: fun(*,2) <==> fun(*x,2), fun(*y,2)
+//positional notation on rceiving function:
+//x,y :: fun(?[1], a, len(?)) <==> fun(x[1], a, len(x))
 
-REGEX: '/:' (ESC_SEQ | '\\' ('+'|'?'|'*'|'('|')'|'['|']'|'{'|':/') 
-    | ':' ~('/') | ~('\\'|':') )* ':/'
+
+// '''there is only '' x,y:percentify(,3):>",".join '' left.'''
+TOPN : '"""'   (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'' ;
+TMID : '\'\''  (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'' ;
+TEND : '\'\''  (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '"""';
+
+REGEX: '/:' ( ESC_SEQ 
+            | '\\' ('+'|'?'|'*'|'('|')'|'['|']'|'{'|':/') 
+            | ':' ~('/') 
+            | ~('\\'|':') 
+            )* 
+       ':/'
 ;
 
 INTDIV: '/?' //integer division
 ;
 
-fragment
-Undig: '_'? '0'..'9' ;
+fragment //2'000.000'345, 1'000'825.
+Undig: '\''? '0'..'9' ;
 
 fragment
 EXPONENT : ('e'|'E') ('+'|'-')? '0'..'9' ('_'? '0'..'9')* ;
