@@ -211,7 +211,7 @@ expr:
 	| ('{'exprlist?'}' | typesig '@' '[' exprlist ']' ) #Array
 	| '<' exprlist? '>' #Set
 	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
-    | TOPN expr (TMID expr)*  TEND #Template
+    | TOPN expr (STR expr)*  TEND #Template
 	| CHAR #Char
 	| INT #Int
 	| FLOAT #Float
@@ -280,16 +280,17 @@ SequSend: '::' ;
 
 
 // '''there is only '' x,y:percentify(,3):>",".join '' left.'''
-TOPN : '"""'   (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'' ;
-TMID : '\'\''  (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '\'\'' ;
-TEND : '\'\''  (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '"""';
+TOPN : '""' STR ;
+//TMID : '"'  (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '"' ;
+TEND : STR '""' ;
 
-REGEX: '/:' ( ESC_SEQ 
+// /a+b/
+REGEX: '/\'' ( ESC_SEQ 
             | '\\' ('+'|'?'|'*'|'('|')'|'['|']'|'{'|':/') 
             | ':' ~('/') 
             | ~('\\'|':') 
             )* 
-       ':/'
+       '\'/'
 ;
 
 INTDIV: '/?' //integer division
