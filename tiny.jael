@@ -19,7 +19,9 @@ def .::private_global_meth():
 def local_meth():
 
 //interface (explicit rather than implied)
-def if iface from parent_if;
+class in iface from parent_face:
+	def void pull();
+; //define iface
 
 class Planet 
 { //enum class!
@@ -49,12 +51,12 @@ class m from n in some_interface:
     //invisible scope
 	.public_static_field 
     .:package_static_field
-    .:-protected_static_field
+    .:.protected_static_field
     .::private_static_field
 
     public_instance_field
     :package_instance_field
-    :-protected_instance_field
+    :.protected_instance_field
     ::private_instance_field
 
     def ..: //static initializer
@@ -67,14 +69,15 @@ class m from n in some_interface:
       .:package_access
       .public_access 
       .::private_access
+      //.instance_counter@class += 1
       local_variable
 
     def .public_static_meth():
     def .:package_static_meth():
-    def .:-protected_static_meth():
+    def .:.protected_static_meth():
     def .::private_static_meth():
 
     def public_instance_meth():
     def :package_instance_meth():
-    def :-protected_instance_meth():
+    def :.protected_instance_meth():
     def ::private_instance_meth():

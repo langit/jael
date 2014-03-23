@@ -457,10 +457,10 @@ contextual type relationship::
         else: ret a
 then both arguments must have the same type.
 
-Type expression: to denote the type of a variable, use prime::
-    def fun(a, b:a'):
-        print("class of argument 'a' is:", a')
-it is NOT a syntactic sugar for a.class.
+Type expression: to denote the type of a variable::
+    def fun(a, a# b) a#:
+        print("class of argument 'a' is:", a#)
+it is NOT a syntactic sugar for a.class (why not?).
 
 Tuple assignment::
     x, x.a.b = "1", 2;
@@ -509,7 +509,7 @@ eminent scope (IEES).
 
 Use .<ID> to access (read/write) an instance/class member 
 (field or method) in a method. 
-Referring to a class member by "class.ID" is also OK.
+Define a class member in any method via ".ID@class=value".
 When not shadowed, instance methods defined in the class scope
 can also be referred to by simple name (via scoping rule).
 But instance methods defined in super classes can only

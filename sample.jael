@@ -1,0 +1,58 @@
+class A from B:
+
+	.sfielda, .sfieldb ?3; //null instance value
+	def ..: //static init block
+		.sfielda, .sfieldb = 1, 2;
+	;
+
+	?nullable; 
+	def .: //instance init block
+		.af , .bf = 3, 4;
+		a = .nullable?.t:1; //1 if .nullable == nil: .nullable.t
+		a = .nullable?(2):0; //0 if .nullable==nil: .nullable(2)
+	;
+
+	def .(a,b): 
+		.a, .b = a, b;
+	;
+	def .() < (0,0); //constructor chaining
+	def .(a) < (a,0); //constructor chaining
+
+	def meth(); //abstract method
+	def meth2(): ; //empty method
+
+    for i in 0..10:
+      case i:
+		in 0, 1: 
+			puts("break by default");
+		; 
+		in 2:
+			puts("there is more");
+			continue case; 
+		;
+		else: puts("here is more");
+	  ;
+	;
+
+	//these probably clatters up the syntax:
+    for(i=1) j in lists: puts(i); ; //i is the counter
+    for(i) j in lists: puts(i); ; //i is the counter from 0
+    for(i-) j in lists: puts(i); ; //the counter steps by -1
+    for(i-3) j in lists: puts(i); ; //the counter steps by -3
+    for(i+3=1) j in lists: puts(i); ; //the counter steps by 3
+
+	for j in box: j, sin(j) >> puts;
+
+	for i=0; i<12; i++: //old style "for"
+	;
+
+	for j in box: ; //as a condition
+	for i <= 12: //old style served as while
+	;
+
+	for..: ; //forever, empty body
+	for..: //as if with a range from 0 to infty
+	break if a>b; 
+
+	def .int get():;
+;

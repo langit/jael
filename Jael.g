@@ -43,17 +43,27 @@ locid: (local=':')? name=ID;
 loclist: ids+=locid (',' ids+=locid)*;
 //should it be at the lexer level? 
 //no: 'self', 'class' are also atoms
-modifier: 'class'| ID;
+modifier: 'class'|ID;
 //'class'|'private'|'public'|'protected'|'final';
 modified: name=ID ('@' mods+=modifier)*;
 
-/*
- * class B in A with interfaces:
- */
+/* 
+//normal class
+class B from A if my_interface: 
+...
+;
 
+//enum class
+class color def:
+...
+;
+
+*/
+
+   
 classStmt:
     //@interface @abstract -- compile-time decorators
-	('@' decors += ID)* 
+	('@' decorators += ID)* 
 	'class' modified 
     ( //enum as a special kind of class, no new keywords
        '{' ID ('(' exprlist ')')? 
@@ -61,28 +71,33 @@ classStmt:
         '}' 
     | //normal class def 
       ( 'from' parent=qname )?
-	  ( 'in' faces += qname (',' faces += qname)* )? 
+	  ( 'if' faces += qname (',' faces += qname)* )? 
     ) //body of class 
     (':' ( defs += defStmt | inits += assignStmt )*)?
     ';'
 ;
+
+//def .: go(int a, int b):
+//that makes the construct of "def .: stmts" problematic!
+//maybe just use "@: stmts ;" as instance initializer.
+//use "@@: stmts ;" as static initializer.
 
 defStmt
 locals[int getIT(int k){ return 0; }
 public Map<String, String> sigs = new HashMap<String,String>();
 public Map<String, Object> defs = new HashMap<String,Object>()]
 :
-    ('@' decors+=qname)* //compile-time decorators
-	'def' modified 
-	(  
-      //property definition
-      (type=qname)? ('=' (setarg=ID)?)? (':' body=stmts)? 
-	//def prop@set(v): .prop := v; //define setter
+    ('@' decorators+=qname)* //compile-time decorators
+	'def' (type=qname)? modified 
+	(
+    //property definition
+	//def int count = v: .count := v; ; //define setter
 	//note that we use ":=" to assign to field,
 	//by-passing the property setter!
+      ('=' setarg=ID)? (':' body=stmts)? ';'
 	| 
-      '(' (params=idlist)? ')' (type=qname)? (':' body = stmts)?
-    ) ';'
+      '(' (params=idlist)? ')' (':' body = stmts)? ';'
+    ) 
 ;
 
 blockStmt
@@ -91,7 +106,12 @@ locals[Map<String, Object> defs = new HashMap<String,Object>()]
 	('@' label =ID )? ':' body=stmts ';'
 ;
 
-// for i in 1..2 @lab:
+//for x in g: ...
+//for &x in g: //x in scope of statement
+//for: //forever
+//for: //forever
+//for(x=1; x<10; x++): //old-style 
+
 forStmt: 
 ('@' label =ID)? 
 	'for' (counter=locid ('=' cstart=expr)? ',')? 
@@ -180,6 +200,7 @@ importStmt: 'import' name=qname ('.' forstar='*' |
 exprStmt: exprlist (':' target)? ';' //simple call
 ;
 
+
 expr: 
 //cast as binary operator of the same pirority as '.'/'@'.
 //can't use ':' -- consider for_stmt or dictionary
@@ -211,11 +232,12 @@ expr:
 	| ('{'exprlist?'}' | typesig '@' '[' exprlist ']' ) #Array
 	| '<' exprlist? '>' #Set
 	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
-    | TOPN expr (STR expr)*  TEND #Template
+    | TOPN expr (STR expr)* TEND #Template
 	| CHAR #Char
+	| RawCode #RawCode
 	| INT #Int
 	| FLOAT #Float
-	| STR #Str
+	| (STR|StrOpen expr (StrMid expr)* StrEnd) #Str
 	| 'nil' #Nil 
 	| 'class' #Class
 	| 'true' #True
@@ -262,9 +284,22 @@ FLOAT
 CHAR:  '\'' (ESC_SEQ | ~('\''|'\\') ) '\''
     ;
 
-STR
-    :  '"' (ESC_SEQ | ~('\\'|'"') )* '"'
-    ;
+RawCode: '\'' (ESC_SEQ | ~('\''|'\\'))+ '\''
+	;
+
+StrOpen:'"' (ESC_SEQ | ~('\\'|'"') )*?  '\'\'';
+StrMid:'\'\'' (ESC_SEQ | ~('\\'|'"') )*?  '\'\'';
+StrEnd: '\'\'' (ESC_SEQ | ~('\\'|'"') )*  '"';
+
+STR :  '"' (ESC_SEQ | ~('\\'|'"'))* '"' ;
+
+// '''there is only '' x,y:percentify(,3):>",".join '' left.'''
+//use ''' for multiline strings?
+TOpen : '""' STR;
+TEnd : STR '""';
+GOpen : '""' StrOpen;
+GEnd : StrEnd;
+
 
 //send elements as multiple parameters
 //x,y => fun  <==> fun(x,y)
@@ -278,11 +313,6 @@ SequSend: '::' ;
 //positional notation on rceiving function:
 //x,y :: fun(?[1], a, len(?)) <==> fun(x[1], a, len(x))
 
-
-// '''there is only '' x,y:percentify(,3):>",".join '' left.'''
-TOPN : '""' STR ;
-//TMID : '"'  (ESC_SEQ|'\'' ~('\'')|~('\\'|'\''))* '"' ;
-TEND : STR '""' ;
 
 // /a+b/
 REGEX: '/\'' ( ESC_SEQ 

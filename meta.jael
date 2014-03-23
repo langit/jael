@@ -1,0 +1,43 @@
+'''this is a meta program.
+when it is expanded, the line numbers has two parts:
+the source part shows the line number for the location 
+of the expansion in the source code, and there is also
+an expansion part, which shows the line number within
+the expanded block of code. For example: 23.1:0 is the 
+number given to the first line of the block 
+from a meta expansion on source code line 23 position 1.  
+'''
+
+#import some.package
+
+#for a in range(3): //meta!
+	print("''a''");
+	print("abc''a''def"); //in string
+	print('''a'''); //quoted between apostrophe
+	print("""abc''a''def" x "and" y "OK!"""); //in template
+	print("""''a''def" x "and" y "OK!"""); //in template
+	print("""''a''" x """); //template
+#;
+
+class test:
+	.:a = 1;
+	def .t;
+	.for i in ..b:;
+;
+
+//As #x indicates a code parameter,
+//''x'' gives the code for x, which 
+//is the same as C macro.
+//For value parameter y, #y gives the code.
+#def max(#x, y) = 
+	(("''x''") if (''x'') > (''y''):("''#y''"))
+;
+
+#def max(#x, y): 
+	(("''x''") if (''x'')>(''y''):("''#y''"));
+;
+
+//when quoted in apostrophe and could not be a char literal,
+//then it is considered rawcode. 
+#m = 3,4;
+''max('x,y', m)''; //'x,y' is a whole piece (rawcode)
