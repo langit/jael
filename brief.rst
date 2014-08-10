@@ -809,15 +809,19 @@ Object Initialization
 
 It is important to check if all fields of an object is properly initialized.
 It seems this can be checked at Type Interpretation: since code is followed
-through for type inference, it is also possible to check if fields/variables
-are initialized (assigned to) or not. When there are branches in the code,
+through for type inference, it is also possible to check if a field/variable
+is initialized (assigned to) or not before a reading of its value. 
+When there are branches in the code,
 a field/variable is considered fully initialized if and only if all branches
 fully initialize it (this can be applied recursively to all branches as well). 
 Meanwhile, the type interpretor also ensures that when 
-fields/variables are read, they are fully initialized, otherwise a warning/error
-mey be reported. A warning is reported if multiple partial initializations are 
-attempted sequentially before a reading, otherwise (only one attempt before a reading)
-an error is reported.
+fields/variables are read, they are fully initialized, otherwise a 
+warning/error may be reported. 
+A warning is reported if multiple partial initializations are 
+attempted sequentially before a reading (should it be an error too? 
+because if that does not cause an initialization error, 
+then some branches without initialization must never be reached), 
+otherwise (only one attempt before a reading) an error is reported.
 
 No default values will be assumed, all fields/variables must be fully initialized
 before value reading is allowed. This also provides the opportunity to check 

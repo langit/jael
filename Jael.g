@@ -15,7 +15,7 @@ stmt: classStmt
     | defStmt
 	| ifStmt
 	| forStmt
-	| whileStmt
+    | whileStmt
 	| caseStmt
 	| breakStmt
 	| loopStmt
@@ -49,29 +49,32 @@ modified: name=ID ('@' mods+=modifier)*;
 
 /* 
 //normal class
-class B from A if my_interface: 
+class B from A in my_interface: 
 ...
 ;
 
 //enum class
-class color def:
-...
+class color @enum:
+	.RED, GREEN, BLUE;
+
+	r, g, b;
+
+	def to_long(): ... ;
 ;
 
 */
 
-   
+ 
 classStmt:
-    //@interface @abstract -- compile-time decorators
 	('@' decorators += ID)* 
-	'class' modified 
+	'class' 'in'? modified //use 'in' to define interfaces
     ( //enum as a special kind of class, no new keywords
        '{' ID ('(' exprlist ')')? 
            (',' ID ('(' exprlist ')')? )*
         '}' 
     | //normal class def 
       ( 'from' parent=qname )?
-	  ( 'if' faces += qname (',' faces += qname)* )? 
+	  ( 'in' faces += qname (',' faces += qname)* )? 
     ) //body of class 
     (':' ( defs += defStmt | inits += assignStmt )*)?
     ';'
@@ -103,27 +106,26 @@ public Map<String, Object> defs = new HashMap<String,Object>()]
 blockStmt
 locals[Map<String, Object> defs = new HashMap<String,Object>()]
 : 
-	('@' label =ID )? ':' body=stmts ';'
+	(label = ID )? '::' body=stmts ';'
 ;
 
 //for x in g: ...
-//for &x in g: //x in scope of statement
-//for: //forever
-//for: //forever
-//for(x=1; x<10; x++): //old-style 
+//for @x in g: //x in scope of statement
 
-forStmt: 
-('@' label =ID)? 
-	'for' (counter=locid ('=' cstart=expr)? ',')? 
-	loopvar = loclist (':' dict_value = ID)? 'in' iterable=expr
-        ':' body = stmts
-	('else' ':' //with the help of a label
-		exhausted = stmts )?
+looper: locid 'in' expr;
+
+forStmt:
+(label =ID)? 'for'
+loopers += looper ('as' loopers += looper)*
+':' body = stmts
+('else' ':' //with the help of a label
+	exhausted = stmts )?
 ';'
 ;
- 
+
+
 whileStmt:
-    ('@' label =ID)? 
+    (label =ID)? 
 	'while' (expr ('as' ID)?)? ':'
 	    body = stmts
 	('else' ':' 
@@ -144,7 +146,7 @@ ifStmt:
 exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
-	('@' label =ID)? 
+	(label =ID)? 
 	'case' expr ('as' ID)?':'
 	('in' vals += exprlist ':' branches += stmts)+
 	('else' ':' branches += stmts)?
@@ -187,8 +189,8 @@ target: //assignment target
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: 
-	target ('='|AUGAS) expr ';'
-;
+	target ('='|AUGASS|'as') expr ';'
+; //constant definition: PI as 3.1415926;
 
 asid: name=ID ('as' rename=ID)? ;
 
@@ -197,7 +199,7 @@ importStmt: 'import' name=qname ('.' forstar='*' |
    ';'
 ;
 
-exprStmt: exprlist (':' target)? ';' //simple call
+exprStmt: expr ';' //simple call
 ;
 
 
@@ -205,41 +207,42 @@ expr:
 //cast as binary operator of the same pirority as '.'/'@'.
 //can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
-      expr '!' (ncast=ID | '(' qncast=qname ')') #Cast
-	| expr '.' attr ('@' mods+=modifier)* #DotAttr //..: super
-    | expr '(' exprlist? ')' #Call
-    | expr '[' exprlist ']' #Index
-	| expr op=('*'|'/'|'%') expr # Term
-	| expr op=('+'|'-') expr # Arith
-	| expr op=('<'|'<='|'>'|'>=') expr # Comp
-	| expr ('if' expr ':' expr)+  # Forked
-    | expr RANGE expr ((('++'|'--') expr)|('+'|'-'))? #Ranger
+//	expr '!' ( ncast=ID | '(' qncast=qname ')' ) #Cast
+//	| expr '.' attr ('@' mods+=modifier)* #DotAttr //..: super
+//    | expr '(' exprlist? ')' #Call
+//    | expr '[' exprlist ']' #Index
+//	| expr op=('*'|'/'|'%') expr # Term
+//	| expr op=('+'|'-') expr # Arith
+//	| expr op=('<'|'<='|'>'|'>='|'in') expr # Comp
+//	| expr ('if' expr ':' expr)+  # Forked
+    //| (expr (RANGE expr)?)? ('++'|'--') expr? #Ranger
+
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
 //    | expr expr+ #Concat
 //format values: expr:%3f
 //format_expr: expr ':%' ...
-    | expr (',' expr)* (MonoSend|SequSend) target #Send
-	| '(' expr ')' #Group
-	| modified #JustId //semantic check on modifiers
-	| '.' attr ('@' mods+=modifier)* #OwnAttr
+	vals += expr (',' vals += expr)* SequSend sendto=expr #Send
+
+	| '(' expr ')' #Atom
+	| ID #JustId //semantic check on modifiers
+	| '.' attr #OwnAttr //('@' mods+=modifier)*
 	//def(a,b){c=a+b; return c*c}
 	| 'def'  '(' idlist? ')' (expr | '{' stmts ';'? '}') #Lamb
-	//between parts there is a hidden '/'
-    | REGEX #Regex
+    | REGEX #Regex //between parts there is a hidden '/'
 	| '[' exprlist? ']' #List
     //int[,] x = int@[2,3];
 	| ('{'exprlist?'}' | typesig '@' '[' exprlist ']' ) #Array
 	| '<' exprlist? '>' #Set
 	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
-    | TOPN expr (STR expr)* TEND #Template
+	//could be a string or a template
+    | STR expr* #TempStr
 	| CHAR #Char
-	| RawCode #RawCode
+//	| RawCode #RawCode
 	| INT #Int
 	| FLOAT #Float
-	| (STR|StrOpen expr (StrMid expr)* StrEnd) #Str
 	| 'nil' #Nil 
-	| 'class' #Class
+//	| 'class' #Class
 	| 'true' #True
 	| 'false' #False
 ;
@@ -261,8 +264,10 @@ primitiveType
 */
 
 RANGE: '...' | '..';
+
 DOT: '.';
-AUGAS: '*=' | '/=' | '%=' | '+=' | '-=' | ':=';
+
+AUGASS: '*=' | '/=' | '%=' | '+=' | '-=' | ':=';
 
 ID  : ('a'..'z'|'A'..'Z'|'_') 
       ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
@@ -284,29 +289,25 @@ FLOAT
 CHAR:  '\'' (ESC_SEQ | ~('\''|'\\') ) '\''
     ;
 
-RawCode: '\'' (ESC_SEQ | ~('\''|'\\'))+ '\''
-	;
+//Meta done separately...like macro preprocessing in C
+//RawCode: '\'' (ESC_SEQ | ~('\''|'\\'))+ '\'';
 
-StrOpen:'"' (ESC_SEQ | ~('\\'|'"') )*?  '\'\'';
-StrMid:'\'\'' (ESC_SEQ | ~('\\'|'"') )*?  '\'\'';
-StrEnd: '\'\'' (ESC_SEQ | ~('\\'|'"') )*  '"';
+//StrOpen:'"' (ESC_SEQ | ~('\\'|'"') )*?  '\'\'';
+//StrMid:'\'\'' (ESC_SEQ | ~('\\'|'"') )*?  '\'\'';
+//StrEnd: '\'\'' (ESC_SEQ | ~('\\'|'"') )*  '"';
 
 STR :  '"' (ESC_SEQ | ~('\\'|'"'))* '"' ;
 
 // '''there is only '' x,y:percentify(,3):>",".join '' left.'''
 //use ''' for multiline strings?
-TOpen : '""' STR;
-TEnd : STR '""';
-GOpen : '""' StrOpen;
-GEnd : StrEnd;
+//TOpen : '""' STR;
+//TEnd : STR '""';
+//GOpen : '""' StrOpen;
+//GEnd : StrEnd;
 
-
-//send elements as multiple parameters
-//x,y => fun  <==> fun(x,y)
-MonoSend: '=>' ; 
 //send one element at a time:
-//x,y,z :: fun <==> fun(x), fun(y), fun(z)
-SequSend: '::' ; 
+//x,y >> fun  <==> fun(x), fun(y)
+SequSend: '>>' ; 
 //star notation on receiving function:
 //x,y :: fun(*) <==> fun(*x), fun(*y)
 //x,y :: fun(*,2) <==> fun(*x,2), fun(*y,2)

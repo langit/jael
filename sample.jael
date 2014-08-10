@@ -5,7 +5,7 @@ class A from B:
 		.sfielda, .sfieldb = 1, 2;
 	;
 
-	?nullable; 
+	nullable?; 
 	def .: //instance init block
 		.af , .bf = 3, 4;
 		a = .nullable?.t:1; //1 if .nullable == nil: .nullable.t
@@ -34,25 +34,42 @@ class A from B:
 	  ;
 	;
 
+	//constant definition
+	PI as 3.1415926;
+
 	//these probably clatters up the syntax:
-    for(i=1) j in lists: puts(i); ; //i is the counter
-    for(i) j in lists: puts(i); ; //i is the counter from 0
-    for(i-) j in lists: puts(i); ; //the counter steps by -1
-    for(i-3) j in lists: puts(i); ; //the counter steps by -3
-    for(i+3=1) j in lists: puts(i); ; //the counter steps by 3
+    for j in lists as i in 1++: puts(i); ; //i is the counter
+    for j in lists as i in ++: puts(i); ; //i is the counter from 0
+    for j in lists as i in --: puts(i); ; //i is the counter from 0
+    for j in lists as i in --3: puts(i); ; //the counter steps by -3
+    for j in lists as i in 1++3: puts(i); ; //the counter steps by 3
+    for j in 1..10++2 as i in 1++3: puts(i); ; //the counter steps by 3
+    for j in 10..0--2 as i in 1++3: puts(i); ; //the counter steps by 3
 
-	for j in box: j, sin(j) >> puts;
+    //the target of '<<' and '>>' can be a function, an array, or a stream
+	for j in box: j,, sin(j) >> output; ;//sends items one at a time
+	for j in box: j, sin(j) >> output; ;//same as: output.append(j,sin(j)) 
+	for j in box: j, sin(j),, i,cos(i) >> output; ;//sends items one at a time
+	for j in box: i,, j << input; ;//read items in one at a time
+	for j in box: i, j << input; ;//read one item with two components? 
 
-	for i=0; i<12; i++: //old style "for"
+	//for i=0; i<12; i+=1 as k in 1++: ; //old style "for"
+
+	for (j in box): ; //as a condition, zero-base counter k 
+	for i <= 12 as k in ..: ; //while, zero-base counter k 
+	for i <= 12 as j in box: ; //paralell for 
+
+	for j in box as k in .. : ; //for j in box @k: ; 
+	for j in box as k in 1 .. ++3: ; //for j in box @k=1++3: ; 
+
+	[(i,j) for i in 1..3 for j in 3..5] //nested
+	[(i,j) for i in 1..3  as j in 3..5] //paralell
+	
+	for ..: ; //forever, empty body
+
+	label for ..: //as if with a range from 0 to infty
+		break label if a>b;
 	;
-
-	for j in box: ; //as a condition
-	for i <= 12: //old style served as while
-	;
-
-	for..: ; //forever, empty body
-	for..: //as if with a range from 0 to infty
-	break if a>b; 
 
 	def .int get():;
 ;

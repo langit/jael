@@ -10,10 +10,12 @@ from a meta expansion on source code line 23 position 1.
 
 #import some.package
 
-#for a in range(3): //meta!
-	print("''a''");
+//heterogenous list: @[1, "a", 3.0]
+
+#for a, b in ( (1,'a'), (2,'b')): //meta!
+	print(''a'', '''b''', ''b''); //print(1, 'a', a);
 	print("abc''a''def"); //in string
-	print('''a'''); //quoted between apostrophe
+	print('''a'''); //quoted between apostrophe: print('1')
 	print("""abc''a''def" x "and" y "OK!"""); //in template
 	print("""''a''def" x "and" y "OK!"""); //in template
 	print("""''a''" x """); //template
@@ -30,12 +32,12 @@ class test:
 //is the same as C macro.
 //For value parameter y, #y gives the code.
 #def max(#x, y) = 
-	(("''x''") if (''x'') > (''y''):("''#y''"))
-;
+	(("''x''") if (''x'') > (''y'') : ("''#y''"))
+#;
 
 #def max(#x, y): 
-	(("''x''") if (''x'')>(''y''):("''#y''"));
-;
+	(("''x''") if (''x'')>(''y'') : ("''#y''"));
+#;
 
 //when quoted in apostrophe and could not be a char literal,
 //then it is considered rawcode. 
