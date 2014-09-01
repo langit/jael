@@ -15,7 +15,7 @@ stmt: classStmt
     | defStmt
 	| ifStmt
 	| forStmt
-    | whileStmt
+    | asloopStmt
 	| caseStmt
 	| breakStmt
 	| loopStmt
@@ -124,9 +124,9 @@ loopers += looper ('as' loopers += looper)*
 ;
 
 
-whileStmt:
+asloopStmt:
     (label =ID)? 
-	'while' (expr ('as' ID)?)? ':'
+	'as' (expr ('as' ID)?)? ':'
 	    body = stmts
 	('else' ':' 
 		other = stmts)?
@@ -164,6 +164,32 @@ tryStmt:
 typelist:
 	typesig (',' typesig)*
 ;
+
+//Comment: 2014/9/1
+//We probably don't need such a complex type system 
+//(that has types with type parameters).
+//Assume that, for a general type G, once the type of 
+//each field  is given, it is completely determined.
+//Thus we can give a concrete type as G{int a, double b},
+//if G has only two fields a and b.
+//If we further assume that all field types must be
+//determined at creation/initialization, then
+//we can further simplify the notation by recording
+//how it is created: G{int a, double b} indicates
+//that an instance of G is created by calling 
+//G(int a, double b), which also determines the types of 
+//all other possible fields of G.
+//Two different creation (if we allow multiple definition of
+//initialization methods) might produce the same underlying
+//concrete type, if all corresponding field types agree.
+
+//Inference: each instance is known to be related to 
+//a certain creation parameter seti (creation signature). 
+//If there are still other fields to be assigned values after
+//creation, then their types are determined at assignment.
+//if there are multiple such field assignments, the
+//requirement is that they must agree in type, 
+//without regard to the site of creation in the code.
 
 typesig: //simple type
 	  qname ('<' typelist '>')? //such as: list of some type
@@ -207,24 +233,23 @@ expr:
 //cast as binary operator of the same pirority as '.'/'@'.
 //can't use ':' -- consider for_stmt or dictionary
 //ex:  b = a!str * "3"!int;
-//	expr '!' ( ncast=ID | '(' qncast=qname ')' ) #Cast
-//	| expr '.' attr ('@' mods+=modifier)* #DotAttr //..: super
-//    | expr '(' exprlist? ')' #Call
-//    | expr '[' exprlist ']' #Index
-//	| expr op=('*'|'/'|'%') expr # Term
-//	| expr op=('+'|'-') expr # Arith
-//	| expr op=('<'|'<='|'>'|'>='|'in') expr # Comp
-//	| expr ('if' expr ':' expr)+  # Forked
-    //| (expr (RANGE expr)?)? ('++'|'--') expr? #Ranger
+	  expr '.' attr #DotAttr //('@' mods+=modifier)* //..: super
+    | expr '(' exprlist? ')' #Call
+    | expr '[' exprlist ']' #Index
+	| expr op=('*'|'/'|'%') expr # Term
+	| expr op=('+'|'-') expr # Arith
+	| expr op=('<'|'<='|'>'|'>='|'in'|'not' 'in') expr # Comp
+	| 'not' expr # Negate
+	| expr ('if' expr ':' expr)+  # Forked
+//| (expr (RANGE expr)?)? ('++'|'--') expr? #Ranger
 
 //concat values as strings: "count is:" 9
 //in case of a leading '.': "count is:" (.counter)
 //    | expr expr+ #Concat
 //format values: expr:%3f
 //format_expr: expr ':%' ...
-	vals += expr (',' vals += expr)* SequSend sendto=expr #Send
-
-	| '(' expr ')' #Atom
+//	| vals += expr (',' vals += expr)* '>>' to=expr #Send
+	| '(' type=qname? expr ')' #CastAtom //allow cast here!
 	| ID #JustId //semantic check on modifiers
 	| '.' attr #OwnAttr //('@' mods+=modifier)*
 	//def(a,b){c=a+b; return c*c}
@@ -248,7 +273,7 @@ expr:
 ;
 
 attr: 'import'| 'if'| 'else'| 'elif'| 'case' |'in' 
-	|'for'| 'while'| 'break'| 'continue'
+	|'for'| 'as'| 'break'| 'continue'
 	|'true'| 'false'| 'class'| 'nil'| ID;
 /*
 primitiveType

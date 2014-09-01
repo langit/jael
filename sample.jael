@@ -62,14 +62,34 @@ class A from B:
 	for j in box as k in .. : ; //for j in box @k: ; 
 	for j in box as k in 1 .. ++3: ; //for j in box @k=1++3: ; 
 
-	[(i,j) for i in 1..3 for j in 3..5] //nested
-	[(i,j) for i in 1..3  as j in 3..5] //paralell
+	[(i,j) for i in 1..3: for j in 3..5] //nested
+	[(i,j) for i in 1..3, j in 3..5] //paralell
 	
 	for ..: ; //forever, empty body
+	for i in s, j in t, k > 0:  //parallel
+	;
+
+	as i < 10: ;//while condition
+	//put a '?' before a value to convert to bool
+	as i in s: //while condition
+		1 : tout; //print in terminal
+		1,2,3, : tout; //print in terminal, without newline
+		a = "give me a number" : input; //read from terminal
+		2 >>> 1 == 1; //shift right
+		2 <<< 1 == 4; //shift left
+	;
+
+	//cast/coersion: a pair in parenthesis
+    a = (int k) * 3;
+
+	if i in s: 
+	;
 
 	label for ..: //as if with a range from 0 to infty
 		break label if a>b;
 	;
 
-	def .int get():;
+	def . int get(str a, int a):
+		int a = 3;
+    ;
 ;
