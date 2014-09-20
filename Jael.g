@@ -34,14 +34,20 @@ loopStmt: 'continue' (label=ID)? ('if' expr)? ';'
 ;
 
 qname: names+=ID ('.' names+=ID)*;
-idlist: ids+=ID (',' ids+=ID)* ;
+idlist: ids+=ID (',' ids+=ID)*;
+
 //in an eminent scope: locid makes 
 //the id only available to the scope itself.
 //in an obscure scope, it binds the name
 //in that obscure scope, which is available
 //to any scopes nested in that obscure scope.
 locid: (local=':')? name=ID;
-loclist: ids+=locid (',' ids+=locid)*;
+//loclist: ids+=locid (',' ids+=locid)*;
+easytarg:
+   (attach='.')? (access+=':')* (type=typesig)? ID (unreal='?')? 
+   //use '?' for nullable/abstract names
+;
+
 //should it be at the lexer level? 
 //no: 'self', 'class' are also atoms
 //modifier: 'class'|ID;
@@ -54,12 +60,24 @@ class B from A in my_interface:
 ...
 ;
 
-*/
+//abstract class: appending '?' to class name
+class B?: ... ;
 
+//interface
+class in B from parent_interface: ... ;
+
+//enum
+class B{
+	a, b, c
+}:
+...
+;
+
+*/
  
 classStmt:
 	('@' decorators += ID)* 
-	'class' 'in'? ID //use 'in' to define interfaces
+	'class' 'in'?  easytarg //use 'in' to define interfaces
     ( //enum as a special kind of class, no new keywords
        '{' ID ('(' exprlist ')')? 
            (',' ID ('(' exprlist ')')? )*
@@ -83,7 +101,7 @@ public Map<String, String> sigs = new HashMap<String,String>();
 public Map<String, Object> defs = new HashMap<String,Object>()]
 :
     ('@' decorators+=qname)* //compile-time decorators
-	'def' '.'? ':'* (type=qname)? ID? //without ID, a caller
+	'def' easytarg //without ID, a caller
 	(
     //property definition
 	//def int count = v: .count := v; ; //define setter
@@ -198,9 +216,12 @@ typesig: //simple and general types
     |'<' typesig (',' typesig )* '>' //tuple type
 ;
 
+retarg:
+	('(' (args=exprlist)? ')')? ('.' ID | '[' idx=exprlist ']')
+;
+
 target: //assignment target
-   (attached='.')? (access+=':')* typesig? expr '?'? //nullable
-// | target ('(' (args=exprlist)? ')')? ('.' ID | '[' idx=exprlist ']')
+ easytarg (retargs += retarg)*
 ;
 
 // to avoid binding a name in current eminent scope,
