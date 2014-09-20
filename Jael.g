@@ -6,9 +6,10 @@ import java.util.Map;
 import java.util.HashMap;
 }
 
-stmts: (seq+=stmt)*;
 
 module: stmts EOF;
+
+stmts: (seq+=stmt)*;
 
 //a statement has its own ending ';'
 stmt: classStmt
@@ -20,7 +21,7 @@ stmt: classStmt
 	| breakStmt
 	| loopStmt
 	| importStmt
-	| blockStmt
+//	| blockStmt
 	| assignStmt
 	| exprStmt
 	| tryStmt
@@ -43,9 +44,9 @@ locid: (local=':')? name=ID;
 loclist: ids+=locid (',' ids+=locid)*;
 //should it be at the lexer level? 
 //no: 'self', 'class' are also atoms
-modifier: 'class'|ID;
+//modifier: 'class'|ID;
 //'class'|'private'|'public'|'protected'|'final';
-modified: name=ID ('@' mods+=modifier)*;
+//modified: name=ID ('@' mods+=modifier)*;
 
 /* 
 //normal class
@@ -53,21 +54,12 @@ class B from A in my_interface:
 ...
 ;
 
-//enum class
-class color @enum:
-	.RED, GREEN, BLUE;
-
-	r, g, b;
-
-	def to_long(): ... ;
-;
-
 */
 
  
 classStmt:
 	('@' decorators += ID)* 
-	'class' 'in'? modified //use 'in' to define interfaces
+	'class' 'in'? ID //use 'in' to define interfaces
     ( //enum as a special kind of class, no new keywords
        '{' ID ('(' exprlist ')')? 
            (',' ID ('(' exprlist ')')? )*
@@ -91,7 +83,7 @@ public Map<String, String> sigs = new HashMap<String,String>();
 public Map<String, Object> defs = new HashMap<String,Object>()]
 :
     ('@' decorators+=qname)* //compile-time decorators
-	'def' (type=qname)? modified 
+	'def' '.'? ':'* (type=qname)? ID? //without ID, a caller
 	(
     //property definition
 	//def int count = v: .count := v; ; //define setter
@@ -103,26 +95,28 @@ public Map<String, Object> defs = new HashMap<String,Object>()]
     ) 
 ;
 
-blockStmt
-locals[Map<String, Object> defs = new HashMap<String,Object>()]
-: 
-	(label = ID )? '::' body=stmts ';'
-;
+//blockStmt
+//locals[Map<String, Object> defs = new HashMap<String,Object>()]
+//: 
+//	(label = ID )? '::' body=stmts ';'
+//;
 
 //for x in g: ...
 //for @x in g: //x in scope of statement
 
-looper: locid 'in' expr;
+looper: loopvars += locid 
+        (',' loopvars += locid)* 
+       'in' expr
+;
 
 forStmt:
 (label =ID)? 'for'
-loopers += looper ('as' loopers += looper)*
+loopers += looper (',' loopers += looper)* 
 ':' body = stmts
 ('else' ':' //with the help of a label
 	exhausted = stmts )?
 ';'
 ;
-
 
 asloopStmt:
     (label =ID)? 
@@ -146,8 +140,7 @@ ifStmt:
 exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
-	(label =ID)? 
-	'case' expr ('as' ID)?':'
+	(label =ID)? 'case' expr ('as' ID)?':'
 	('in' vals += exprlist ':' branches += stmts)+
 	('else' ':' branches += stmts)?
     ';'
@@ -155,8 +148,9 @@ caseStmt: //need more thorough thinking...
 
 tryStmt:
    'try' ':' stmts 
-   ('catch' ID ':' stmts)* 
-   ('ensure' ':' stmts)?
+   ('catch' catids += qname ('or' catids += qname)* 
+           ('as' exvar=ID)? ':' stmts)* 
+   ('final' ':' stmts)?
    ';'
 ;
 
@@ -191,10 +185,12 @@ typelist:
 //requirement is that they must agree in type, 
 //without regard to the site of creation in the code.
 
-typesig: //simple type
-	  qname ('<' typelist '>')? //such as: list of some type
-	//possibly (jagged) array or function
-	| typesig ('[' ']' |'@' '(' typelist? ')' )
+typesig: //simple and general types 
+	  qname ('<' typelist '>')? 
+	//(jagged) array: int[3][] //jagged, like C#
+	| typesig '[' (dims+=',')*  ']' 
+	//function type
+    | typesig '@' '(' typelist? ')'
 	//regular multi-dimension arrays can be added later
 	//like: x=int@[3,4] creates a 3 by 4 matrix 
     |'<' (lo=typesig ('in'|'from'))? wild='?' 
@@ -203,20 +199,26 @@ typesig: //simple type
 ;
 
 target: //assignment target
-   ('.')? (':')* (typesig)? ID
- | target ('(' (args=exprlist)? ')')? ('.' ID | '[' idx=exprlist ']');
+   (attached='.')? (access+=':')* typesig? expr '?'? //nullable
+// | target ('(' (args=exprlist)? ')')? ('.' ID | '[' idx=exprlist ']')
+;
 
 // to avoid binding a name in current eminent scope,
 // use ':=' instead of '=' assignment.
 // var := k rebinds 'var' to the nearest enclosing scope
-// that actually defined such a name.
+// that actually defined (or used?) such a name.
 // for later assignments, plain '=' can be used.
 // if a name's first appreance is a read operation,
 // it is rebound to the nearest enclosing scope.
 // augmented assignments have the same understanding.
 assignStmt: 
-	target ('='|AUGASS|'as') expr ';'
-; //constant definition: PI as 3.1415926;
+	target ('='|':'|AUGASS) expr ';'
+; //PI: 3.1415926; //constant definition
+
+//   for public
+//:  for package/module
+//:: for private
+//::? for protected //not supported
 
 asid: name=ID ('as' rename=ID)? ;
 
@@ -238,7 +240,7 @@ expr:
     | expr '[' exprlist ']' #Index
 	| expr op=('*'|'/'|'%') expr # Term
 	| expr op=('+'|'-') expr # Arith
-	| expr op=('<'|'<='|'>'|'>='|'in'|'not' 'in') expr # Comp
+	| expr op=('<'|'<='|'>'|'>='|'in'|NOTIN) expr # Comp //not in?
 	| 'not' expr # Negate
 	| expr ('if' expr ':' expr)+  # Forked
 //| (expr (RANGE expr)?)? ('++'|'--') expr? #Ranger
@@ -351,6 +353,8 @@ REGEX: '/\'' ( ESC_SEQ
 
 INTDIV: '/?' //integer division
 ;
+
+NOTIN: 'not' [ \t\n]+ 'in';
 
 fragment //2'000.000'345, 1'000'825.
 Undig: '\''? '0'..'9' ;
