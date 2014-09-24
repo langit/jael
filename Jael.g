@@ -33,20 +33,22 @@ breakStmt: 'break' (label=ID)? ('if' expr)? ';'
 loopStmt: 'continue' (label=ID)? ('if' expr)? ';' 
 ;
 
+easytarg:
+   (attach='.')? (access+=':')* (type=typesig)? ID (unreal='?')? 
+   //use '?' for nullable/abstract names
+;
+easytargs: targs+=easytarg (',' rargs+=easytarg)*;
+
 qname: names+=ID ('.' names+=ID)*;
-idlist: ids+=ID (',' ids+=ID)*;
 
 //in an eminent scope: locid makes 
 //the id only available to the scope itself.
 //in an obscure scope, it binds the name
 //in that obscure scope, which is available
 //to any scopes nested in that obscure scope.
-locid: (local=':')? name=ID;
+//locid: (local=':')? name=ID; //NOTE: replaced by easytarg
+
 //loclist: ids+=locid (',' ids+=locid)*;
-easytarg:
-   (attach='.')? (access+=':')* (type=typesig)? ID (unreal='?')? 
-   //use '?' for nullable/abstract names
-;
 
 //should it be at the lexer level? 
 //no: 'self', 'class' are also atoms
@@ -109,7 +111,7 @@ public Map<String, Object> defs = new HashMap<String,Object>()]
 	//by-passing the property setter!
       ('=' setarg=ID)? (':' body=stmts)? ';'
 	| 
-      '(' (params=idlist)? ')' (':' body = stmts)? ';'
+      '(' (params=easytargs)? ')' (':' body = stmts)? ';'
     ) 
 ;
 
@@ -122,10 +124,7 @@ public Map<String, Object> defs = new HashMap<String,Object>()]
 //for x in g: ...
 //for @x in g: //x in scope of statement
 
-looper: loopvars += locid 
-        (',' loopvars += locid)* 
-       'in' expr
-;
+looper: easytargs 'in' expr;
 
 forStmt:
 (label =ID)? 'for'
@@ -276,7 +275,7 @@ expr:
 	| ID #JustId //semantic check on modifiers
 	| '.' attr #OwnAttr //('@' mods+=modifier)*
 	//def(a,b){c=a+b; return c*c}
-	| 'def'  '(' idlist? ')' (expr | '{' stmts ';'? '}') #Lamb
+	| 'def'  '(' easytargs? ')' (expr | '{' stmts ';'? '}') #Lamb
     | REGEX #Regex //between parts there is a hidden '/'
 	| '[' exprlist? ']' #List
     //int[,] x = int@[2,3];
