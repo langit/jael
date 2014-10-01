@@ -1,6 +1,6 @@
 class A from B:
 
-	.sfielda, .sfieldb ?3; //null instance value
+	.sfielda, .sfieldb? =3; //null instance value
 	def ..: //static init block
 		.sfielda, .sfieldb = 1, 2;
 	;
@@ -35,7 +35,7 @@ class A from B:
 	;
 
 	//constant definition
-	PI as 3.1415926;
+	PI: 3.1415926;
 
 	//these probably clatters up the syntax:
     for j in lists as i in 1++: puts(i); ; //i is the counter
@@ -92,4 +92,11 @@ class A from B:
 	def . int get(str a, int a):
 		int a = 3;
     ;
+;
+
+
+class* generic: //generic class
+	def .(a,b): 
+		.a=a; .b=b;
+	;
 ;

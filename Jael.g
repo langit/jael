@@ -75,11 +75,49 @@ class B{
 ...
 ;
 
+
+Jael generics: 
+A type is generic whenever a member (field or method),
+in spite of the same signature (the signature of
+a field is its name, just like a method with zero arguments),
+can take on different types under different configurations. 
+Each configuration defines a specific type from the generics.
+
+Generics are like a template in C++, it will eventually
+become many different specific types. When a generic type is
+used as a type specification, it is considered as a constraint,
+indicating the actually type must be a specific type of it.
+
+It is problematic for a generic type to be used for casting, 
+for the compiler can not infer the actual specific type.
+Then we either forbid such casting, or provide a way to 
+spell out the specific types (say, via type constructor).
+
+However, a third solution is to create a common type 
+for the generic type, implemented by all its specific types.
+This common type will contain all member signatures
+as required in the code under the name of that generic type.
+The common type can be either an abstract class or interface.
+With this solution, when a generic type is used as a type
+specification, it is no longer considered a constraint, 
+as there is indeed a real type for it: the common interface.
+The type of a member in the common type is the union type of
+the same member in all specific types.
+
+Do we allow multiple constructors?
+
+//java generics examples
+public class GenericsFoo<T> { ...}  
+public interface GenericsIFoo<T> { ...}  
+public interface List<T> extends Collection<T> { ...}  
+T get(int index);   
+public static <T> T getFirst(List<T> list) { ...}  
+<X> GenericsFoo(X x) {...}  
 */
- 
+
 classStmt:
-	('@' decorators += ID)* 
-	'class' 'in'?  easytarg //use 'in' to define interfaces
+	('@' decorators += ID)* (generic='*')? 
+	'class' (isface='in')? easytarg //use 'in' for interfaces
     ( //enum as a special kind of class, no new keywords
        '{' ID ('(' exprlist ')')? 
            (',' ID ('(' exprlist ')')? )*
@@ -181,7 +219,7 @@ typelist:
 //(that has types with type parameters).
 //Assume that, for a general type G, once the type of 
 //each field  is given, it is completely determined.
-//Thus we can give a concrete type as G{int a, double b},
+//Thus we can give a concrete type as G[int a, double b],
 //if G has only two fields a and b.
 //If we further assume that all field types must be
 //determined at creation/initialization, then
@@ -192,10 +230,10 @@ typelist:
 //all other possible fields of G.
 //Two different creation (if we allow multiple definition of
 //initialization methods) might produce the same underlying
-//concrete type, if all corresponding field types agree.
+//concrete type, if all corresponding field are the same type.
 
 //Inference: each instance is known to be related to 
-//a certain creation parameter seti (creation signature). 
+//a certain creation parameter set (creation signature). 
 //If there are still other fields to be assigned values after
 //creation, then their types are determined at assignment.
 //if there are multiple such field assignments, the
