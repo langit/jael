@@ -100,9 +100,21 @@ as required in the code under the name of that generic type.
 The common type can be either an abstract class or interface.
 With this solution, when a generic type is used as a type
 specification, it is no longer considered a constraint, 
-as there is indeed a real type for it: the common interface.
-The type of a member in the common type is the union type of
-the same member in all specific types.
+as there is indeed a real type for it: the common type.
+
+While it might seem fit to create a common type for all
+specific types of a general type, a more accommodating and 
+accurate way is to create an interface for each concrete use 
+of such a general type (at member, variable, argument type 
+declaration) in a concrete realization of execution. 
+Interface is preferred because of multiple inheritance, 
+where the fields can be specified by getters/setters.
+
+The type of a member in the common type is the closest super 
+type of the same member in all specific types. For fields, 
+it is better to use getters/setters, which should be 
+generated automatically. The generated setters will need 
+to downcast since the value types are super types.
 
 Do we allow multiple constructors?
 
@@ -196,8 +208,9 @@ exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
 	(label =ID)? 'case' expr ('as' ID)?':'
+		(defaultcase = stmts)?
 	('in' vals += exprlist ':' branches += stmts)+
-	('else' ':' branches += stmts)?
+	//('in' ':' defaultcase = stmts)?
     ';'
 ;
 

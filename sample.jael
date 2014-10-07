@@ -1,3 +1,5 @@
+a = b; //swap values
+
 class A from B:
 
 	.sfielda, .sfieldb? =3; //null instance value
@@ -12,11 +14,15 @@ class A from B:
 		a = .nullable?(2):0; //0 if .nullable==nil: .nullable(2)
 	;
 
-	def .(a,b): 
+	def .(a,b): //constructor 
 		.a, .b = a, b;
 	;
-	def .() < (0,0); //constructor chaining
-	def .(a) < (a,0); //constructor chaining
+	//when a parameter is attached, 
+	//its value is assigned on invocation
+	def .(.a, .b); //constructor, same as above
+
+	def .() <= (0,0); //constructor chaining
+	def .(a) <= (a,0); //constructor chaining
 
 	def meth(); //abstract method
 	def meth2(): ; //empty method
@@ -95,8 +101,9 @@ class A from B:
 ;
 
 
-class* generic: //generic class
+*class generic: //generic class
 	def .(a,b): 
 		.a=a; .b=b;
 	;
 ;
+

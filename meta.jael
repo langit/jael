@@ -8,9 +8,65 @@ number given to the first line of the block
 from a meta expansion on source code line 23 position 1.  
 '''
 
-#import some.package
+#import * from some.package; //import macros only
 
-//heterogenous list: @[1, "a", 3.0]
+//bundle: (1, "a", 3.0) //length can't change
+//const bundle: (: x = 1, "a", 3.0 :) //no item change 
+//fixed length list: [: 1,2,3 :] //array!
+
+
+//possible syntax for using macro demands:
+macroStmt: MACOM exprlist (':' stmt+)? ';';
+
+
+//the first pass happens at parsing...
+//the main purpose is to build namespaces
+//so we will be able to know macro commands
+//thus in lexer we can distinguish on the fly
+//if an ID is a macro command or not (MACOM)
+
+//in parser file:
+tokens {MACOM, SLAVE}
+ID: [a-zA-Z]+ 
+    {
+       if(JaelParser.isMACOM(getText())) setType(JaelParser.MACOM);
+       if(JaelParser.isSLAVE(getText())) setType(JaelParser.SLAVE);
+    }
+;
+
+//a macro can't be MACOM and SLAVE at the same time.
+//no ID can be a MACOM or SLAVE.
+//assume MACOM/SLAVE defined *before* use.
+//another syntax (don't allow MACOM, SLAVE as ID in params)
+slavekeys: 'in'|'else'|'or'|'and'|'got'|'is'|'as'|'from';
+slave: (SLAVE|slavekeys) macroBody; //may use some keywords
+macroBody: params (':' stmts? slave*)? ;
+macroStmt: MACOM macroBody ';' ; //master must be unique
+
+//example:
+@def repeat {block} @until cond:
+     while true:
+       @block
+       break if cond;
+     ;
+@end
+
+slaveSpec: '@' (ID{JaelParser.addSlave($ID.getText());}
+                 |SLAVE|slavekeys) ('?'|'*'|'+')
+           (params=exprlist)? ('{' block=ID '}')?; 
+
+//master def
+macroDefStmt: '@def' ID {JaelParser.addMACOM($ID.getText());}
+  exprlist? ('{' block=ID '}')? slaveSpec* ':' stmts '@end'; 
+
+//the second pass is doing interpretation.
+
+print @(1, 2), 3;
+
+print @[1, 2], 3;
+
+//cast: 
+(pack.bag 3)
 
 #for a, b in ( (1,'a'), (2,'b')): //meta!
 	print(''a'', '''b''', ''b''); //print(1, 'a', a);
@@ -19,6 +75,12 @@ from a meta expansion on source code line 23 position 1.
 	print("""abc''a''def" x "and" y "OK!"""); //in template
 	print("""''a''def" x "and" y "OK!"""); //in template
 	print("""''a''" x """); //template
+#;
+
+#def loopy(names):
+	#for i in -1 .. len(names):
+        friend["''names[i]''"]="''names[i+1]''";
+	#;
 #;
 
 class test:
@@ -43,3 +105,105 @@ class test:
 //then it is considered rawcode. 
 #m = 3,4;
 ''max('x,y', m)''; //'x,y' is a whole piece (rawcode)
+
+
+
+//here are some new idea:
+//three types of macros: objects, functions, commands.
+//but we will not support objects and functions:
+//for they are not hygene and not essential, as
+//object can be replaced by constants, and 
+//functions can be replaced by (possibly inline) regular ones.
+//so we will only support macro commands.
+//we specify that macros MUST be defined before use, so 
+//that we can parse the sorce code sequentially.
+
+//object:
+#Pi: 
+  3.14159
+#;
+
+#Pi: 3.14159;
+
+//function: (automatic bracketing)
+#min(a, b): 
+   a>b?b:a 
+#; //same as: ((a)>(b)?(b):(a))
+
+#def intpow(a, p): //integral power
+  #assert type(p) is int, "p must be integer!"
+  #negpow = p<0
+  #if negpow:  
+    #p = -p
+    1./(
+  #;
+  1
+  #for i in 0 .. p:
+    *a
+  #;
+  #if negpow:
+    )
+  #;
+#;
+ 
+//command:
+#def @forever {block} :
+   while true:
+     block
+   ;
+#;
+
+#def @shuffle exprlist ;
+	#for expr in exprlist:
+		#assert expr.writable(), "each item must be writable!"
+	#;
+	exprlist = list(exprlist).shuffle();
+#;
+
+//example with master/slave, pattern
+@def repeat {block} @until cond:
+   while true:
+     @block
+     break if cond;
+   ;
+#;
+
+//example
+repeat: //master macro
+  print("ok!");
+until cond; //slave macro
+
+//now local variable
+for @i in .. 5;
+//global variable
+$mygv = 2;
+
+//exampel of nested macros (master+slaves)
+@def @case x {block}? (@in lists* {blocks})+:
+	$val = x;
+	switch($val){
+    	default: ''block''
+	//nested block ('case' is master macro)
+		@for exprs in lists, block in blocks:
+		   @for expr in exprs:
+			   case(@expr):
+           @end
+               @block 
+               break;
+		@end
+	@end
+	}
+@end
+
+case x:
+//in: //default
+	print("default");
+in 1:
+	print("one");
+in 2:
+	print("two");
+in 3:
+	print("three");
+//in class Address:
+;
+
