@@ -501,17 +501,17 @@ In instance methods, instance fields are defined by prepending
 a variable name with '.'.
 
 Prepend an ID with a ':' to define an obscure variable in 
-an obscure scope. Futer reference to the same
+an obscure scope. Future reference to the same
 variable may omit the ':' before its ID.
 The assignment of "ID '=' expr" in an 
 obscure scope puts the definition into the immediately enclosing
 eminent scope (IEES). 
 
-Use .<ID> to access (read/write) an instance/class member 
+Use .<ID> to access (read/write) an instance member 
 (field or method) in a method. 
-Define a class member in any method via ".ID@class=value".
-When not shadowed, instance methods defined in the class scope
-can also be referred to by simple name (via scoping rule).
+Define/access a class member in an instance method via "..ID=value".
+Define/access a class member in class/static method via ".ID=value".
+Class scope is invisible.
 But instance methods defined in super classes can only
 be refered to by ".meth" or "super.meth".
 
@@ -520,11 +520,11 @@ so it can never be a class/static method.
 
 Nested classes.
 To refer to the the static/instance member of an outer class,
-the syntax is "..member". Super class member is simply referred
+the syntax is ".@member". Super class member is simply referred
 to as "super.member". If the super class is nested, to refer
-to its outer class member is possible: "super..member". Such
+to its outer class member is possible: "super.@member". Such
 a syntax can be generalized to a variable 'v' referring to an 
-instance of a nested class: "v..member" refers to an outer member.
+instance of a nested class: "v.@member" refers to an outer member.
 
 Below is an example::
 
@@ -540,9 +540,9 @@ Below is an example::
 
   class iclass: // instance class
     def imeth():
-      ..instancefield += 1; //outer instance field
-      ..staticfield = 0; //outer static field
-      staticfield := 0; // or simply by scoping
+      .@instancefield += 1; //outer instance field
+      ..@staticfield = 0; //outer static field
+      ..staticfield = 0; 
     ;
   ;
 
@@ -778,7 +778,7 @@ properties:  def prop: and def prop=v:. Example::
         .ifield3 = 2 //introduce fields anywhere in the class
 
      //from super class constructor with params (0)  
-     def .() << (0): //constructor
+     def .() < (0): //constructor
         .int ifield3 = 1 //introduce field with type
 
      //constructor that depends on another one
@@ -788,8 +788,8 @@ properties:  def prop: and def prop=v:. Example::
      def(a): //make a instance callable 
         return .ifield+a
 
-     def meth(a) int @atomic: //instance method
-        return a+.ifield+.staticfield
+     def int meth(a) @atomic: //instance method
+        return a+.ifield+..staticfield
 
      def +(a): //instance operator
         return .ifield + a

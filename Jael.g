@@ -208,9 +208,9 @@ exprlist: exprs += expr (',' exprs += expr)* ;
 
 caseStmt: //need more thorough thinking...
 	(label =ID)? 'case' expr ('as' ID)?':'
-		(defaultcase = stmts)?
+	//	(defaultcase = stmts)?
 	('in' vals += exprlist ':' branches += stmts)+
-	//('in' ':' defaultcase = stmts)?
+	('in' ':' defaultcase = stmts)?
     ';'
 ;
 
@@ -333,6 +333,7 @@ expr:
 	| ('{'exprlist?'}' | typesig '@' '[' exprlist ']' ) #Array
 	| '<' exprlist? '>' #Set
 	| ('{'':''}' | '{' expr':'expr (',' expr':'expr)* '}') #Dict
+	//| ('['':'']' | '[' expr':'expr (',' expr':'expr)* ']') #Dict
 	//could be a string or a template
     | STR expr* #TempStr
 	| CHAR #Char

@@ -8,6 +8,16 @@ number given to the first line of the block
 from a meta expansion on source code line 23 position 1.  
 '''
 
+//macros will be expanded, technically they are templates.
+
+//we will implement a template system for the macros.
+//this template system can also help translate jael into 
+//a target language such as Java after type inference.
+
+//imported macros are put into each module's macro list
+//imediately (you only need to import masters, slaves
+//will automatically follow their masters) while parsing,
+//therefore it requires the parsing of the imported one first.
 #import * from some.package; //import macros only
 
 //bundle: (1, "a", 3.0) //length can't change
@@ -40,30 +50,192 @@ ID: [a-zA-Z]+
 //another syntax (don't allow MACOM, SLAVE as ID in params)
 slavekeys: 'in'|'else'|'or'|'and'|'got'|'is'|'as'|'from';
 slave: (SLAVE|slavekeys) macroBody; //may use some keywords
-macroBody: params (':' stmts? slave*)? ;
+macroBody: params ((':' stmts)? slave*)? ;
 macroStmt: MACOM macroBody ';' ; //master must be unique
 
-//example:
-@def repeat {block} @until cond:
-     while true:
-       @block
-       break if cond;
-     ;
-@end
+//this is a macro, master is from, slave is to.
+//when there is no stmts in between, ':' can be omitted.
+from "source" to "dest";
 
-slaveSpec: '@' (ID{JaelParser.addSlave($ID.getText());}
-                 |SLAVE|slavekeys) ('?'|'*'|'+')
+//example: (parser/lexer switch to template mode)
+#def repstmt = 
+	@repeat ':' stmts as block @until expr as cond ';'
+:
+     while true:
+       ''block''
+       if cond: break;
+     ;
+#end
+
+//new syntax:
+#def @repeat: block  @until cond ;
+
+
+#end def
+
+//convert an if-stmt:
+#ifstmt = 
+       @if expr as ifcond ':' stmts as ifblock ';'
+          * @elif expr as elifconds ':' stmts as elifblocks ';'
+          ? @else ':' stmts as elseblock ';'
+: 
+  if (''ifcond''){
+   ''ifblock''
+  } #
+  #for cond in elifconds,
+      stmts in elifstmts:
+   else if (''cond''){
+     ''stmts''
+   } # 
+  #end for
+
+  #if elseblock:
+   else{ 
+     ''elseblock'' 
+   }
+  #end if
+#ifstmt;
+
+#stmt = (defstmt | ifstmt | forstmt) as one:
+#case one.class:
+#in defstmt:
+#end case
+#stmt;
+
+#defstmt = 
+     'def' [ID: //push into current scope
+        overwrite = warning("Warning: overwrite def" ID) ] 
+     { //new local scope 
+           '(' paramlist ')' ':' stmts ';' 
+     } //local scope ends
+:
+//define methods and properties for defstmt
+# def @type(): ... //logic of method
+# @uname = str(ID)+'$'+str(scope.depth)+'$';
+
+# @def local_function(): ...
+
+#defstmt;
+
+//pre, post, prepost
+#def[type=prepost] 'if' expr { stmts_if } 
+           *'elif' expr_elif { stmts_elif } 
+           ?'else' { stmts_else }:
+#preti
+ //the template
+#end
+
+  #case expr.type:
+  #in bool:
+    @if ( ''expr'' ) //literal if, no more expanding 
+  #in int, float:
+    @if (''expr'' != 0) 
+  #in str, list, tuple:
+    @if (''expr''?.length > 0) 
+  #else:
+    @if (''expr''?.bool())
+  #end
+
+  { ''stmts_if: join=";\n"'' }
+
+
+  #for expr in expr_elif, stmts in stmts_elif:
+   @else{
+     #case expr.type:
+     #in bool:
+        @if ( ''expr'' ) 
+     #in int, float:
+       @if (''expr'' != 0) 
+     #in str, list, tuple:
+       @if (''expr''?.length > 0) 
+     #else:
+       @if (''expr''?.bool())
+     #end
+     { ''stmts: join=";\n"'' }
+   }
+  #end
+
+  #if stmts_else:
+   @else{ ''stmts_else: join=";\n"''; }
+  #end
+
+#end
+
+
+a = x div y overflow "too bad!";
+//Define an operator (if div:-3, it is left association): 
+//assoc=left/right, postfix/prefix
+#div[priority=3,left,prefix] = expr1 @div expr2 @overflow msg: 
+    customdiv(expr1, expr2, msg)
+    //expr1.div(expr2, msg) 
+	//note: it will be interpreted as (expr1).div(expr2, msg)
+    //because expr1 is clearly an inseparable entity.
+    //this is done to avoid the same problems in C macros
+#div;
+//they will be pushed to the parser or stack.
+//we define tokens representing operators of certain priority
+//tokens{OP1, OP2, OP3, OP4, OP5, OP6, OP7, OP8, OP9, OP10, OP11}
+//lexer would do this: 
+//OPERATOR: [!##$%^&*?/|<>][!##$%^&*?/|<>][!##$%^&*?/|<>]?
+//           {setType(JaelParser.getCustomOpType(getText()));};
+//and the same can be done with lexer rule ID to allow for 
+//more plain operator names like: div, push, etc.
+
+//may even magically switch the mode of the lexer
+//mode=ID: text, csv, json
+//text mode [text]: text to the end of line (comments?)
+//text mode [text;]: text must end with ';' at end of line, 
+//which then allows for multi-line text
+//text mode [text:]: text must end with ':' at end of line?
+
+slaveSpec: '#' (ID{JaelParser.addSlave($ID.getText());}
+                 |SLAVE|slavekeys) ('?'|'*'|'+') ('['mode=ID']')?
            (params=exprlist)? ('{' block=ID '}')?; 
 
 //master def
-macroDefStmt: '@def' ID {JaelParser.addMACOM($ID.getText());}
-  exprlist? ('{' block=ID '}')? slaveSpec* ':' stmts '@end'; 
+macroDefStmt: '#def' name=ID {JaelParser.addMACOM($ID.getText());}
+  ('['mode=ID']')? exprlist? ('{' block=ID '}')? slaveSpec* ':' stmts ';'
+; 
+
+//register lexers under different names
+//to make it possible to extend?
+//then must agree on a predifined set of tokens 
+#hostname[text] = text:
+     config.hostname = "''text''";
+#hostname;
+
+hostname bizwar.pku.edu:80
+//config.hostname = "bizwar.pku.edu:80";
+
+ifdef winnt_module: //[text:]
+   
+end //text mode, with the ';' omitted
+
+//example: 'for' construct as a macro?
+#forstmt = for exps '{' stmts '}':
+  #for e in exps:
+     temp$''e.left'' = ''e.right'';
+  #end
+
+  while true:
+     try:
+  #for e in exps:
+     #assert e.operator == 'in' and e.left.tokens.length == 1 
+             and e.left.token[0].id == TOKENS.ID;
+        ''e.left'' = next(temp$''e.left'');
+  #end
+     catch StopIteration e:
+        break;
+     ;
+     ''stmts''; //if stmts contains ';' already?
+  ;//while true
+#forstmt;
 
 //the second pass is doing interpretation.
 
-print @(1, 2), 3;
+print #(1, 2), 3;
 
-print @[1, 2], 3;
+print #[1, 2], 3;
 
 //cast: 
 (pack.bag 3)
@@ -93,13 +265,13 @@ class test:
 //''x'' gives the code for x, which 
 //is the same as C macro.
 //For value parameter y, #y gives the code.
-#def max(#x, y) = 
+#max(#x, y) = 
 	(("''x''") if (''x'') > (''y'') : ("''#y''"))
-#;
+#max;
 
-#def max(#x, y): 
+#max(#x, y): 
 	(("''x''") if (''x'')>(''y'') : ("''#y''"));
-#;
+#max;
 
 //when quoted in apostrophe and could not be a char literal,
 //then it is considered rawcode. 
@@ -147,26 +319,26 @@ class test:
 #;
  
 //command:
-#def @forever {block} :
+#forever = forever {block} :
    while true:
      block
    ;
-#;
+#forever;
 
-#def @shuffle exprlist ;
+#shufstmt = 'shuffle' exprlist ;
 	#for expr in exprlist:
 		#assert expr.writable(), "each item must be writable!"
 	#;
 	exprlist = list(exprlist).shuffle();
-#;
+#shufstmt;
 
 //example with master/slave, pattern
-@def repeat {block} @until cond:
+#repstmt = 'repeat' '{' block '}' 'until' cond:
    while true:
-     @block
+     #block
      break if cond;
    ;
-#;
+#repstmt;
 
 //example
 repeat: //master macro
@@ -174,29 +346,30 @@ repeat: //master macro
 until cond; //slave macro
 
 //now local variable
-for @i in .. 5;
+for #i in .. 5;
 //global variable
 $mygv = 2;
 
 //exampel of nested macros (master+slaves)
-@def @case x {block}? (@in lists* {blocks})+:
+#casestmt = 'case' x {block}? 
+      + 'in' lists* '{' blocks '}'
+:
 	$val = x;
 	switch($val){
     	default: ''block''
 	//nested block ('case' is master macro)
-		@for exprs in lists, block in blocks:
-		   @for expr in exprs:
-			   case(@expr):
-           @end
-               @block 
+		#for exprs in lists, block in blocks:
+		   #for expr in exprs:
+			   case(#expr):
+           #end
+               #block 
                break;
-		@end
-	@end
+		#end
 	}
-@end
+#casestmt;
 
 case x:
-//in: //default
+in case: //default
 	print("default");
 in 1:
 	print("one");
@@ -207,3 +380,17 @@ in 3:
 //in class Address:
 ;
 
+
+/**
+Some idea on creating a macro language.
+
+1. any line that does not start with a macro command is treated as a string
+2. if a string line happends to start with a macro command, use the backslash
+   '\' to escape the macro command.
+3. an inner macro is first expanded before being passed to the outer macro.
+4. inside a macro def, only lines start with # are treated as macros, which
+   may need be further expanded.
+5. in a macro def, it is possible to declare the types of macro parameters,
+   which will be parsed further according to their declared types when the 
+   macro is being processed.
+*/
