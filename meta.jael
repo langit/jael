@@ -58,23 +58,17 @@ macroStmt: MACOM macroBody ';' ; //master must be unique
 from "source" to "dest";
 
 //example: (parser/lexer switch to template mode)
-#def repstmt = 
-	@repeat ':' stmts as block @until expr as cond ';'
+#:repstmt=
+	'repeat' ':' stmts as block 'until' expr as cond ';'
 :
      while true:
        ''block''
        if cond: break;
      ;
-#end
-
-//new syntax:
-#def @repeat: block  @until cond ;
-
-
-#end def
+#repstmt;
 
 //convert an if-stmt:
-#ifstmt = 
+#:ifstmt=
        @if expr as ifcond ':' stmts as ifblock ';'
           * @elif expr as elifconds ':' stmts as elifblocks ';'
           ? @else ':' stmts as elseblock ';'
@@ -96,13 +90,13 @@ from "source" to "dest";
   #end if
 #ifstmt;
 
-#stmt = (defstmt | ifstmt | forstmt) as one:
+#:stmt= (defstmt | ifstmt | forstmt) as one:
 #case one.class:
 #in defstmt:
 #end case
 #stmt;
 
-#defstmt = 
+#:defstmt =
      'def' [ID: //push into current scope
         overwrite = warning("Warning: overwrite def" ID) ] 
      { //new local scope 
@@ -118,13 +112,11 @@ from "source" to "dest";
 #defstmt;
 
 //pre, post, prepost
-#def[type=prepost] 'if' expr { stmts_if } 
+#:ifstmt[type=prepost]=
+       'if' expr { stmts_if } 
            *'elif' expr_elif { stmts_elif } 
-           ?'else' { stmts_else }:
-#preti
- //the template
-#end
-
+           ?'else' { stmts_else }
+:
   #case expr.type:
   #in bool:
     @if ( ''expr'' ) //literal if, no more expanding 
@@ -134,7 +126,7 @@ from "source" to "dest";
     @if (''expr''?.length > 0) 
   #else:
     @if (''expr''?.bool())
-  #end
+  #case;
 
   { ''stmts_if: join=";\n"'' }
 
@@ -153,19 +145,19 @@ from "source" to "dest";
      #end
      { ''stmts: join=";\n"'' }
    }
-  #end
+  #for;
 
   #if stmts_else:
    @else{ ''stmts_else: join=";\n"''; }
-  #end
+  #if;
 
-#end
+#ifstmt;
 
 
 a = x div y overflow "too bad!";
 //Define an operator (if div:-3, it is left association): 
 //assoc=left/right, postfix/prefix
-#div[priority=3,left,prefix] = expr1 @div expr2 @overflow msg: 
+#:div[priority=3,left,prefix]= expr1 @div expr2 @overflow msg: 
     customdiv(expr1, expr2, msg)
     //expr1.div(expr2, msg) 
 	//note: it will be interpreted as (expr1).div(expr2, msg)
@@ -200,7 +192,7 @@ macroDefStmt: '#def' name=ID {JaelParser.addMACOM($ID.getText());}
 //register lexers under different names
 //to make it possible to extend?
 //then must agree on a predifined set of tokens 
-#hostname[text] = text:
+#:hostname{text}= text :
      config.hostname = "''text''";
 #hostname;
 
@@ -212,7 +204,7 @@ ifdef winnt_module: //[text:]
 end //text mode, with the ';' omitted
 
 //example: 'for' construct as a macro?
-#forstmt = for exps '{' stmts '}':
+#:forstmt= for exps '{' stmts '}':
   #for e in exps:
      temp$''e.left'' = ''e.right'';
   #end
@@ -249,11 +241,11 @@ print #[1, 2], 3;
 	print("""''a''" x """); //template
 #;
 
-#def loopy(names):
+#:loopy(names)=
 	#for i in -1 .. len(names):
         friend["''names[i]''"]="''names[i+1]''";
 	#;
-#;
+#loopy;
 
 class test:
 	.:a = 1;
@@ -265,11 +257,11 @@ class test:
 //''x'' gives the code for x, which 
 //is the same as C macro.
 //For value parameter y, #y gives the code.
-#max(#x, y) = 
+#:max(#x, y)= 
 	(("''x''") if (''x'') > (''y'') : ("''#y''"))
 #max;
 
-#max(#x, y): 
+#:max(#x, y): 
 	(("''x''") if (''x'')>(''y'') : ("''#y''"));
 #max;
 
@@ -291,41 +283,39 @@ class test:
 //that we can parse the sorce code sequentially.
 
 //object:
-#Pi: 
-  3.14159
-#;
+#Pi: 3.14159
 
-#Pi: 3.14159;
+#Pi: 3.14159
 
 //function: (automatic bracketing)
-#min(a, b): 
+#:min(a, b)=
    a>b?b:a 
-#; //same as: ((a)>(b)?(b):(a))
+#min; //same as: ((a)>(b)?(b):(a))
 
-#def intpow(a, p): //integral power
+#:intpow(a, p)= //integral power
   #assert type(p) is int, "p must be integer!"
   #negpow = p<0
   #if negpow:  
     #p = -p
     1./(
-  #;
+  #if;
   1
   #for i in 0 .. p:
     *a
-  #;
+  #for;
   #if negpow:
     )
-  #;
-#;
+  #if;
+#intpow;
  
 //command:
-#forever = forever {block} :
+#:forever = forever {block} :
    while true:
      block
    ;
 #forever;
 
-#shufstmt = 'shuffle' exprlist ;
+#:shufstmt= 'shuffle' exprlist:
 	#for expr in exprlist:
 		#assert expr.writable(), "each item must be writable!"
 	#;
@@ -333,7 +323,7 @@ class test:
 #shufstmt;
 
 //example with master/slave, pattern
-#repstmt = 'repeat' '{' block '}' 'until' cond:
+#:repstmt= 'repeat' '{' block '}' 'until' cond:
    while true:
      #block
      break if cond;
@@ -351,7 +341,7 @@ for #i in .. 5;
 $mygv = 2;
 
 //exampel of nested macros (master+slaves)
-#casestmt = 'case' x {block}? 
+#:casestmt = 'case' x {block}? 
       + 'in' lists* '{' blocks '}'
 :
 	$val = x;
